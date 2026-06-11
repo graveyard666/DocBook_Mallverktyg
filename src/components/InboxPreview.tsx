@@ -295,7 +295,7 @@ export function InboxPreview({ doc }: { doc: DocBookDocument }) {
       </div>
 
       {/* Message body */}
-      <div className="px-6 py-6 flex-1 overflow-y-auto">
+      <div className="px-6 py-6 flex-1 overflow-y-auto break-words">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           {doc.sections.map((section) => (
             <SectionRenderer key={section.id} section={section} />
