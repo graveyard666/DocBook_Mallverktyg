@@ -1,10 +1,40 @@
 import { FileText, Plus, BookOpen } from 'lucide-react';
-import { exampleTemplates } from '../data/examples';
+import { exampleTemplates, type ExampleTemplate } from '../data/examples';
 
 interface Props {
   onLoadExample: (id: string) => void;
   onNewBlank: () => void;
   activeExampleId: string | null;
+}
+
+const groups: { id: string; label: string }[] = [
+  { id: 'inera', label: 'Inera-exempel' },
+  { id: 'region-dalarna', label: 'Region Dalarna' },
+];
+
+function ExampleButton({
+  tmpl,
+  active,
+  onLoad,
+}: {
+  tmpl: ExampleTemplate;
+  active: boolean;
+  onLoad: () => void;
+}) {
+  return (
+    <button
+      onClick={onLoad}
+      className={`w-full flex flex-col gap-0.5 px-3 py-2.5 rounded text-left transition-colors ${
+        active ? 'bg-[#C0002E]/10 text-[#C0002E]' : 'text-gray-700 hover:bg-gray-50'
+      }`}
+    >
+      <span className="flex items-center gap-2">
+        <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+        <span className="text-sm font-semibold leading-tight">{tmpl.name}</span>
+      </span>
+      <span className="text-xs text-gray-400 pl-5 leading-tight">{tmpl.description}</span>
+    </button>
+  );
 }
 
 export function Sidebar({ onLoadExample, onNewBlank, activeExampleId }: Props) {
@@ -38,35 +68,32 @@ export function Sidebar({ onLoadExample, onNewBlank, activeExampleId }: Props) {
         </button>
       </div>
 
-      {/* Examples */}
+      {/* Grouped examples */}
       <div className="flex-1 overflow-y-auto">
-        <div className="px-4 pt-4 pb-2 flex items-center gap-2">
-          <BookOpen className="w-3.5 h-3.5 text-gray-400" />
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            Inera-exempel
-          </span>
-        </div>
-        <div className="px-3 space-y-1 pb-4">
-          {exampleTemplates.map((tmpl) => (
-            <button
-              key={tmpl.id}
-              onClick={() => onLoadExample(tmpl.id)}
-              className={`w-full flex flex-col gap-0.5 px-3 py-2.5 rounded text-left transition-colors ${
-                activeExampleId === tmpl.id
-                  ? 'bg-[#C0002E]/10 text-[#C0002E]'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <FileText className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="text-sm font-semibold leading-tight">{tmpl.name}</span>
-              </span>
-              <span className="text-xs text-gray-400 pl-5 leading-tight">
-                {tmpl.description}
-              </span>
-            </button>
-          ))}
-        </div>
+        {groups.map((group, idx) => {
+          const items = exampleTemplates.filter((t) => t.group === group.id);
+          if (items.length === 0) return null;
+          return (
+            <div key={group.id} className={idx > 0 ? 'border-t border-gray-100' : ''}>
+              <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+                <BookOpen className="w-3.5 h-3.5 text-gray-400" />
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  {group.label}
+                </span>
+              </div>
+              <div className="px-3 space-y-1 pb-4">
+                {items.map((tmpl) => (
+                  <ExampleButton
+                    key={tmpl.id}
+                    tmpl={tmpl}
+                    active={activeExampleId === tmpl.id}
+                    onLoad={() => onLoadExample(tmpl.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Footer */}

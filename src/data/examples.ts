@@ -175,10 +175,59 @@ const referralReceipt = `<?xml version="1.0"?>
   </section>
 </article>`;
 
+const regionDalarnaAppointment = `<?xml version="1.0" encoding="UTF-8"?>
+<article>
+  <section>
+    <title>Du är välkommen till {=GetData(&quot;AppointmentList.PerformingDepartment.Name&quot;)}</title>
+    <para>Vi har fått en remiss från: {=GetData(&quot;AppointmentList.RequestingDepartment.Name&quot;)}</para>
+    <para></para>
+    <para><emphasis role="bold">Vi har bokat följande undersökning:</emphasis></para>
+    <para>{=GetData(&quot;AppointmentList.Procedure.PrintedDescription&quot;)}</para>
+    <para>Det under detta väder {=GetData(&quot;AppointmentList.PatientStartDateTime.DayOfWeekText&quot;)}</para>
+    <variablelist>
+      <varlistentry>
+        <term>Datum:</term>
+        <listitem>Måndag 30 Oktober 1998 {=GetData(&quot;AppointmentList.PatientStartDateTime.DayOfWeekText&quot;)}</listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Tid:</term>
+        <listitem>10:00 {=GetData(&quot;AppointmentList.PatientStartDateTime.DayOfWeekText&quot;)}</listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Plats:</term>
+        <listitem>Sälens vårdcentral {=GetData(&quot;AppointmentList.PerformingDepartment.Name&quot;)}</listitem>
+      </varlistentry>
+    </variablelist>
+  </section>
+  <section>
+    <title><emphasis role="information">Viktigt inför ditt besök:</emphasis></title>
+    <itemizedlist mark="bullet">
+      <listitem>Kom 15 minuter före utsatt tid.</listitem>
+      <listitem>Anmäl dig i receptionen på entréplanet.</listitem>
+      <listitem>Ta med godkänd ID-handling, annars kan du bli nekad undersökningen.</listitem>
+      <listitem>Piercingar och andra smycken bör avlägsnas för att undvika störningar på röntgenbilderna.</listitem>
+      <listitem>Meddela oss vid eventuell graviditet.</listitem>
+    </itemizedlist>
+  </section>
+  <section>
+    <title><emphasis role="frame">Övrig information:</emphasis></title>
+    <para><emphasis role="bold">Avgift:</emphasis></para>
+    <para>Information om patientavgift samt debitering för sent avbokat eller uteblivet besök, läs mer på: <link url="1177.se/patientavgifter" type="_blank">1177.se/patientavgifter</link></para>
+    <para></para>
+    <para><emphasis role="bold">Vid förhinder/ kontakt:</emphasis></para>
+    <para>Du kan om- eller avboka ditt besök via e-tjänster <link url="1177.se" type="_blank">1177.se</link></para>
+    <para>Eller kontakta oss på telefon 010-249 06 68.</para>
+    <para><emphasis role="bold">Resa vårdbesök:</emphasis></para>
+    <para>Res kostnadsfritt till ditt vårdbesök i Dalatrafiks app. Läs mer på: <link url="https://www.1177.se/Dalarna/patientavgifter" type="_blank">www.1177.se/Dalarna/patientavgifter</link></para>
+    <para>Vid frågor kontakta Dalatrafik 0771-95 95 95.</para>
+  </section>
+</article>`;
+
 export interface ExampleTemplate {
   id: string;
   name: string;
   description: string;
+  group: string;
   xml: string;
 }
 
@@ -187,25 +236,36 @@ export const exampleTemplates: ExampleTemplate[] = [
     id: 'booked-no-buttons',
     name: 'Bokad tid (utan knappar)',
     description: 'Bokningsbekräftelse med sektioner och listor',
+    group: 'inera',
     xml: bookedAppointmentNoButtons,
   },
   {
     id: 'booked-textboxes',
     name: 'Bokad tid (med informationsrutor)',
     description: 'Bokningsbekräftelse med grå och gul informationsruta',
+    group: 'inera',
     xml: bookedAppointmentWithTextBoxes,
   },
   {
     id: 'cervical-screening',
     name: 'Kallelse cellprovtagning',
     description: 'Komplex kallelse med nedfällbara sektioner',
+    group: 'inera',
     xml: cervicalScreening,
   },
   {
     id: 'referral-receipt',
     name: 'Hänvisningskvitto',
     description: 'Enkel strukturerad hänvisning med sektioner',
+    group: 'inera',
     xml: referralReceipt,
+  },
+  {
+    id: 'region-dalarna-appointment',
+    name: 'Röntgenkallelse',
+    description: 'Bokningsbekräftelse med dynamiska fält, informationsrutor och externa länkar',
+    group: 'region-dalarna',
+    xml: regionDalarnaAppointment,
   },
 ];
 
