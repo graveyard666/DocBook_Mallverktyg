@@ -235,7 +235,7 @@ function BlockRenderer({ block }: { block: SectionBlock }) {
       <ul className="mb-3 space-y-1">
         {il.items.map((item) => (
           <li key={item.id} className="flex gap-2 text-sm text-[#1A1A1A]">
-            <span className="flex-shrink-0 font-bold mt-0.5 text-[#1A1A1A]">
+            <span className="flex-shrink-0 font-bold mt-0.5 text-[#C0002E]">
               {bullet}
             </span>
             <span className="leading-relaxed">
