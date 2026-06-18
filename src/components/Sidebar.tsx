@@ -10,6 +10,7 @@ interface Props {
 const groups: { id: string; label: string }[] = [
   { id: 'inera', label: 'Inera-exempel' },
   { id: 'region-dalarna', label: 'Region Dalarna' },
+  { id: 'vgr', label: 'VGR' },
 ];
 
 function ExampleButton({

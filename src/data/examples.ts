@@ -223,6 +223,38 @@ const regionDalarnaAppointment = `<?xml version="1.0" encoding="UTF-8"?>
   </section>
 </article>`;
 
+const vgrCareUnitClosed = `<?xml version="1.0" encoding="UTF-8"?>
+<article>
+  <section>
+    <title>Hej!</title>
+    <para>Du har tidigare valt NAMN_PÅ_VC som din vårdcentral
+</para>
+    <para>Denna vårdcentral har nu upphört, då de inte uppfyllt de krav som Västra Götalandsregionen ställer. </para>
+    <para>Därför erbjuder vi dig i stället den vårdcentral som ligger närmast din folkbokföringsadress. </para>
+  </section>
+  <section>
+    <title><emphasis role="information">Du har blivit listad på: NAMN_PÅ_NY_VC, ADRESS_NY_VC, TELE_NY_VC</emphasis></title>
+    <para>Om du är nöjd med erbjudandet behöver du inte göra något mer.</para>
+  </section>
+  <section>
+    <title></title>
+    <para>Om du vill välja en annan vårdcentral kan du göra det. Kontakta då
+den vårdcentral som du vill välja så hjälper de dig.</para>
+    <para>De vårdcentraler som du kan välja mellan och som ingår i
+vårdvalsmodellen Vårdval vårdcentral finns på 1177  - <link url="https://www.1177.se/Vastra-Gotaland/sa-fungerar-varden/att-valja-vardmottagning/valja-vardmottagning/" type="_blank">Välja Vårdcentral</link></para>
+  </section>
+  <section>
+    <title>Övrig information</title>
+    <itemizedlist mark="bullet">
+      <listitem>Om du har frågor som rör din hälsa, kontakta din nya vårdcentral
+eller ring 1177. </listitem>
+      <listitem>Om du har frågor gällande stängningen av NAMN_PÅ_VC är du
+välkommen att kontakta Västra Götalandsregionen via telefon
+070-205 24 30. </listitem>
+    </itemizedlist>
+  </section>
+</article>`;
+
 export interface ExampleTemplate {
   id: string;
   name: string;
@@ -266,6 +298,13 @@ export const exampleTemplates: ExampleTemplate[] = [
     description: 'Bokningsbekräftelse med dynamiska fält, informationsrutor och externa länkar',
     group: 'region-dalarna',
     xml: regionDalarnaAppointment,
+  },
+  {
+    id: 'vgr-careunit-closed',
+    name: 'Stängd vårdcentral',
+    description: 'Information om stängd VC med erbjudande om ny listning',
+    group: 'vgr',
+    xml: vgrCareUnitClosed,
   },
 ];
 
