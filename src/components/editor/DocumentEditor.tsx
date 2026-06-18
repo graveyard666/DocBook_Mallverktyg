@@ -72,6 +72,14 @@ export function DocumentEditor({ doc, onUpdate }: Props) {
           className="w-full text-base font-bold text-[#1A1A1A] border border-gray-200 rounded px-3 py-2 focus:outline-none focus:border-[#0066A1] bg-gray-50"
           placeholder="Meddelandenamn..."
         />
+        <div className="mt-2 px-2.5 py-2 bg-amber-50 border border-amber-100 rounded flex items-start gap-2">
+          <svg className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 11.5a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zm.75-3.5a.75.75 0 0 1-1.5 0V5.75a.75.75 0 0 1 1.5 0V9z"/>
+          </svg>
+          <p className="text-[11px] text-amber-700 italic leading-snug">
+            Meddelandenamnet ingår <span className="font-semibold not-italic">inte</span> i DocBook-koden och exporteras ej. Används som titel i det externa anropet (t.ex. addMessage).
+          </p>
+        </div>
       </div>
 
       {/* Toolbar */}
