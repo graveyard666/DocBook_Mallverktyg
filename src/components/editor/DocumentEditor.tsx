@@ -77,7 +77,7 @@ export function DocumentEditor({ doc, onUpdate }: Props) {
             <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 11.5a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zm.75-3.5a.75.75 0 0 1-1.5 0V5.75a.75.75 0 0 1 1.5 0V9z"/>
           </svg>
           <p className="text-[11px] text-amber-700 italic leading-snug">
-            Meddelandenamnet ingår <span className="font-semibold not-italic">inte</span> i DocBook-koden och exporteras ej. Används som titel i det externa anropet (t.ex. addMessage).
+            Meddelandenamnet ingår <span className="font-semibold not-italic">inte</span> i DocBook-koden. Sätts i addmessage anropet som title.
           </p>
         </div>
       </div>
