@@ -39,7 +39,9 @@ function serializeSectionTitle(title: SectionTitle): string {
 }
 
 function serializePara(para: ParaBlock): string {
-  return `<para>${serializeInlineNodes(para.children)}</para>`;
+  return para.paragraphs
+    .map((p) => `<para>${serializeInlineNodes(p.nodes)}</para>`)
+    .join('\n');
 }
 
 function serializeVarList(vl: VarListBlock): string {
@@ -67,7 +69,8 @@ function serializeBlock(block: SectionBlock, indent = '    '): string {
   if (block.type === 'para') xml = serializePara(block);
   else if (block.type === 'variablelist') xml = serializeVarList(block);
   else if (block.type === 'itemizedlist') xml = serializeItemizedList(block);
-  return indent + xml;
+  // Prefix every line with the indent so multi-para blocks stay aligned
+  return xml.split('\n').map((line) => indent + line).join('\n');
 }
 
 function serializeSection(section: Section): string {
@@ -81,7 +84,7 @@ function serializeSection(section: Section): string {
 export function serializeDocument(doc: DocBookDocument): string {
   const sections = doc.sections.map(serializeSection).join('\n');
   const rootParas = (doc.rootParas ?? [])
-    .map((p) => '  ' + serializePara(p))
+    .map((p) => serializePara(p).split('\n').map((line) => '  ' + line).join('\n'))
     .join('\n');
   const body = [sections, rootParas].filter(Boolean).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<article>\n${body}\n</article>`;

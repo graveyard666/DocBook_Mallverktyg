@@ -196,16 +196,22 @@ function ParaInlineRenderer({ nodes }: { nodes: InlineNode[] }) {
 
 function BlockRenderer({ block }: { block: SectionBlock }) {
   if (block.type === 'para') {
-    const hasContent = (block as ParaBlock).children.some((n) => {
-      if (n.type === 'text') return n.content.trim().length > 0;
-      if (n.type === 'emphasis' || n.type === 'link') return true;
-      return false;
-    });
-    if (!hasContent) return <div className="h-4" />;
+    const paraBlock = block as ParaBlock;
+    const visibleParas = paraBlock.paragraphs.filter((p) =>
+      p.nodes.some((n) => {
+        if (n.type === 'text') return n.content.trim().length > 0;
+        return true;
+      })
+    );
+    if (visibleParas.length === 0) return <div className="h-4" />;
     return (
-      <p className="text-sm text-[#1A1A1A] leading-relaxed mb-2">
-        <ParaInlineRenderer nodes={(block as ParaBlock).children} />
-      </p>
+      <>
+        {visibleParas.map((p) => (
+          <p key={p.id} className="text-sm text-[#1A1A1A] leading-relaxed mb-2">
+            <ParaInlineRenderer nodes={p.nodes} />
+          </p>
+        ))}
+      </>
     );
   }
 

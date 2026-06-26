@@ -19,8 +19,8 @@ function makeSection(role?: EmphasisRole): Section {
     blocks: [
       {
         id: uid(),
-        type: 'para',
-        children: [{ type: 'text', content: '' }],
+        type: 'para' as const,
+        paragraphs: [{ id: uid(), nodes: [{ type: 'text' as const, content: '' }] }],
       },
     ],
   };

@@ -1,8 +1,10 @@
+import { useState, useRef, useEffect } from 'react';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import type {
   Section,
   SectionBlock,
   ParaBlock,
+  ParaParagraph,
   VarListBlock,
   ItemizedListBlock,
   InlineNode,
@@ -10,7 +12,7 @@ import type {
   ListItem,
   EmphasisRole,
 } from '../../types/docbook';
-import { InlineEditor, inlineNodesToText, textToInlineNodes } from './InlineEditor';
+import { InlineEditor } from './InlineEditor';
 import { BlockControls } from './BlockControls';
 
 function uid() {
@@ -22,24 +24,80 @@ function ParaBlockEditor({
   block,
   onUpdate,
   onEnter,
-  onShiftEnter,
 }: {
   block: ParaBlock;
   onUpdate: (b: ParaBlock) => void;
   onEnter: () => void;
-  onShiftEnter: () => void;
 }) {
+  const [focusPendingId, setFocusPendingId] = useState<string | null>(null);
+  const wrapperRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (focusPendingId) {
+      const wrapper = wrapperRefs.current[focusPendingId];
+      const editor = wrapper?.querySelector('[contenteditable]') as HTMLElement | null;
+      if (editor) {
+        editor.focus();
+        setFocusPendingId(null);
+      }
+    }
+  }, [focusPendingId]);
+
+  function updateParagraph(id: string, nodes: InlineNode[]) {
+    onUpdate({
+      ...block,
+      paragraphs: block.paragraphs.map((p) => (p.id === id ? { ...p, nodes } : p)),
+    });
+  }
+
+  function addParagraphAfter(id: string) {
+    const newId = uid();
+    const idx = block.paragraphs.findIndex((p) => p.id === id);
+    const paragraphs = [...block.paragraphs];
+    paragraphs.splice(idx + 1, 0, { id: newId, nodes: [{ type: 'text', content: '' }] });
+    onUpdate({ ...block, paragraphs });
+    setFocusPendingId(newId);
+  }
+
+  function removeParagraph(id: string) {
+    if (block.paragraphs.length <= 1) return;
+    onUpdate({ ...block, paragraphs: block.paragraphs.filter((p) => p.id !== id) });
+  }
+
   return (
-    <InlineEditor
-      nodes={block.children}
-      onChange={(nodes) => onUpdate({ ...block, children: nodes })}
-      placeholder="Skriv stycketext… (Enter = nytt stycke, Shift+Enter = nytt stycke)"
-      className="text-sm text-gray-800 leading-relaxed w-full"
-      multiline
-      onEnter={onEnter}
-      onShiftEnter={onShiftEnter}
-      showFormattingToolbar
-    />
+    <div>
+      {block.paragraphs.map((para, idx) => (
+        <div
+          key={para.id}
+          ref={(el) => { wrapperRefs.current[para.id] = el; }}
+          className={`relative group/para ${idx > 0 ? 'pt-2 mt-2 border-t border-dashed border-gray-200' : ''}`}
+        >
+          <InlineEditor
+            nodes={para.nodes}
+            onChange={(nodes) => updateParagraph(para.id, nodes)}
+            placeholder={
+              idx === 0
+                ? 'Skriv stycketext… (Shift+Enter = ny para, Enter = nytt stycke)'
+                : 'Fortsättning…'
+            }
+            className="text-sm text-gray-800 leading-relaxed w-full"
+            onEnter={onEnter}
+            onShiftEnter={() => addParagraphAfter(para.id)}
+            showFormattingToolbar
+          />
+          {block.paragraphs.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removeParagraph(para.id)}
+              title="Ta bort paragraf"
+              className="absolute right-0 top-0 p-0.5 opacity-0 group-hover/para:opacity-100 rounded hover:bg-red-50 text-gray-300 hover:text-red-400 transition-all"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -255,6 +313,14 @@ function sectionLabel(role: EmphasisRole | null): string {
   return 'Sektion';
 }
 
+function makeEmptyPara(): ParaBlock {
+  return {
+    id: uid(),
+    type: 'para',
+    paragraphs: [{ id: uid(), nodes: [{ type: 'text', content: '' }] }],
+  };
+}
+
 interface SectionEditorProps {
   section: Section;
   onUpdate: (s: Section) => void;
@@ -316,7 +382,7 @@ export function SectionEditor({
   function addBlock(type: 'para' | 'variablelist' | 'itemizedlist-bullet' | 'itemizedlist-hyphen') {
     let newBlock: SectionBlock;
     if (type === 'para') {
-      newBlock = { id: uid(), type: 'para', children: [{ type: 'text', content: '' }] };
+      newBlock = makeEmptyPara();
     } else if (type === 'variablelist') {
       newBlock = {
         id: uid(),
@@ -371,7 +437,7 @@ export function SectionEditor({
         {section.blocks.map((block, idx) => {
           const blockLabel =
             block.type === 'para'
-              ? 'Stycke — Enter eller Shift+Enter = nytt stycke'
+              ? `Stycke${(block as ParaBlock).paragraphs.length > 1 ? ` (${(block as ParaBlock).paragraphs.length} paragrafer)` : ''}`
               : block.type === 'variablelist'
               ? 'Variabellista'
               : `Lista (${(block as ItemizedListBlock).mark === 'bullet' ? 'punkt' : 'streck'})`;
@@ -391,23 +457,8 @@ export function SectionEditor({
                   block={block as ParaBlock}
                   onUpdate={(b) => updateBlock(block.id, b)}
                   onEnter={() => {
-                    const newBlock: ParaBlock = {
-                      id: uid(),
-                      type: 'para',
-                      children: [{ type: 'text', content: '' }],
-                    };
                     const blocks = [...section.blocks];
-                    blocks.splice(idx + 1, 0, newBlock);
-                    onUpdate({ ...section, blocks });
-                  }}
-                  onShiftEnter={() => {
-                    const newBlock: ParaBlock = {
-                      id: uid(),
-                      type: 'para',
-                      children: [{ type: 'text', content: '' }],
-                    };
-                    const blocks = [...section.blocks];
-                    blocks.splice(idx + 1, 0, newBlock);
+                    blocks.splice(idx + 1, 0, makeEmptyPara());
                     onUpdate({ ...section, blocks });
                   }}
                 />

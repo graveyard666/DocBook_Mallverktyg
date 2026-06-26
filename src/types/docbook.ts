@@ -29,10 +29,15 @@ export interface InlineLink {
 
 export type InlineNode = InlineText | InlineEmphasis | InlineLink;
 
+export interface ParaParagraph {
+  id: string;
+  nodes: InlineNode[];
+}
+
 export interface ParaBlock {
   id: string;
   type: 'para';
-  children: InlineNode[];
+  paragraphs: ParaParagraph[];
 }
 
 export interface VarEntry {

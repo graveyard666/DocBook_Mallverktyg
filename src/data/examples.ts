@@ -357,8 +357,8 @@ export function createBlankDocument(): DocBookDocument {
         blocks: [
           {
             id: `para-${Date.now()}`,
-            type: 'para',
-            children: [{ type: 'text', content: 'Skriv ditt meddelande här.' }],
+            type: 'para' as const,
+            paragraphs: [{ id: `pp-${Date.now()}`, nodes: [{ type: 'text' as const, content: 'Skriv ditt meddelande här.' }] }],
           },
         ],
       },

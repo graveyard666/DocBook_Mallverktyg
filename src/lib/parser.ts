@@ -5,6 +5,7 @@ import type {
   SectionTitle,
   InlineNode,
   ParaBlock,
+  ParaParagraph,
   VarListBlock,
   ItemizedListBlock,
   ListItem,
@@ -52,8 +53,12 @@ function parseSectionTitle(el: Element | null): SectionTitle | undefined {
   return { children: parseInlineNodes(el) };
 }
 
-function parsePara(el: Element): ParaBlock {
-  return { id: uid(), type: 'para', children: parseInlineNodes(el) };
+function makeParaBlock(els: Element[]): ParaBlock {
+  const paragraphs: ParaParagraph[] = els.map((el) => ({
+    id: uid(),
+    nodes: parseInlineNodes(el),
+  }));
+  return { id: uid(), type: 'para', paragraphs };
 }
 
 function parseVarList(el: Element): VarListBlock {
@@ -86,14 +91,34 @@ function parseSection(el: Element): Section {
   const title = parseSectionTitle(titleEl);
   const blocks: SectionBlock[] = [];
 
-  el.childNodes.forEach((child) => {
-    if (child.nodeType !== Node.ELEMENT_NODE) return;
-    const c = child as Element;
-    if (c.tagName === 'title') return;
-    if (c.tagName === 'para') blocks.push(parsePara(c));
-    else if (c.tagName === 'variablelist') blocks.push(parseVarList(c));
-    else if (c.tagName === 'itemizedlist') blocks.push(parseItemizedList(c));
-  });
+  const children = Array.from(el.childNodes).filter(
+    (n) => n.nodeType === Node.ELEMENT_NODE
+  ) as Element[];
+
+  let i = 0;
+  while (i < children.length) {
+    const c = children[i];
+    if (c.tagName === 'title') {
+      i++;
+      continue;
+    }
+    if (c.tagName === 'para') {
+      const paraEls: Element[] = [];
+      while (i < children.length && children[i].tagName === 'para') {
+        paraEls.push(children[i]);
+        i++;
+      }
+      blocks.push(makeParaBlock(paraEls));
+    } else if (c.tagName === 'variablelist') {
+      blocks.push(parseVarList(c));
+      i++;
+    } else if (c.tagName === 'itemizedlist') {
+      blocks.push(parseItemizedList(c));
+      i++;
+    } else {
+      i++;
+    }
+  }
 
   return { id: uid(), title, blocks };
 }
@@ -110,13 +135,26 @@ export function parseDocBookXml(xml: string): DocBookDocument | null {
 
     const sections: Section[] = [];
     const rootParas: ParaBlock[] = [];
+    let currentParaEls: Element[] = [];
+
+    function flushRootParas() {
+      if (currentParaEls.length > 0) {
+        rootParas.push(makeParaBlock(currentParaEls));
+        currentParaEls = [];
+      }
+    }
 
     article.childNodes.forEach((child) => {
       if (child.nodeType !== Node.ELEMENT_NODE) return;
       const el = child as Element;
-      if (el.tagName === 'section') sections.push(parseSection(el));
-      else if (el.tagName === 'para') rootParas.push(parsePara(el));
+      if (el.tagName === 'section') {
+        flushRootParas();
+        sections.push(parseSection(el));
+      } else if (el.tagName === 'para') {
+        currentParaEls.push(el);
+      }
     });
+    flushRootParas();
 
     return { id: uid(), name: 'Imported', sections, rootParas };
   } catch {
