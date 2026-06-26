@@ -17,27 +17,65 @@ type SaveMode = 'folder' | 'new';
 export function SaveDialog({ isOpen, onClose, doc, folderName, originalFileName, onSaved }: Props) {
   const [mode, setMode] = useState<SaveMode>(() => (folderName && originalFileName ? 'folder' : 'new'));
   const [fileName, setFileName] = useState(() => originalFileName ?? `${doc.name || 'dokument'}.xml`);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const hasFolderMode = !!(folderName && originalFileName);
+  const supportsFilePicker = typeof window.showSaveFilePicker === 'function';
 
-  function handleDownload() {
-    const xml = serializeDocument(doc);
+  function resolvedName(): string {
+    const name = fileName.trim() || `${doc.name || 'dokument'}.xml`;
+    return name.endsWith('.xml') ? name : `${name}.xml`;
+  }
+
+  function fallbackDownload(xml: string, name: string) {
     const blob = new Blob([xml], { type: 'application/xml' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    const name = fileName.trim() || `${doc.name || 'dokument'}.xml`;
-    a.download = name.endsWith('.xml') ? name : `${name}.xml`;
+    a.download = name;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    onSaved();
-    onClose();
+  }
+
+  async function handleSave() {
+    setIsSaving(true);
+    setErrorMsg(null);
+    const xml = serializeDocument(doc);
+    const name = resolvedName();
+
+    try {
+      if (mode === 'folder' && supportsFilePicker) {
+        // Open the native OS save dialog — browser remembers last-used folder
+        const handle = await window.showSaveFilePicker!({
+          suggestedName: name,
+          types: [{ description: 'DocBook XML', accept: { 'application/xml': ['.xml'] } }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(xml);
+        await writable.close();
+      } else {
+        fallbackDownload(xml, name);
+      }
+      onSaved();
+      onClose();
+    } catch (err: any) {
+      // AbortError means user dismissed the picker — not a real error
+      if (err?.name !== 'AbortError') {
+        setErrorMsg('Något gick fel. Försök igen eller välj "Ladda ned som ny fil".');
+      }
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function handleModeChange(m: SaveMode) {
     setMode(m);
+    setErrorMsg(null);
     if (m === 'folder' && originalFileName) {
       setFileName(originalFileName);
     } else if (m === 'new') {
@@ -91,6 +129,9 @@ export function SaveDialog({ isOpen, onClose, doc, folderName, originalFileName,
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5 truncate" title={folderName!}>
                     {folderName}
+                    {!supportsFilePicker && (
+                      <span className="ml-1 text-amber-500">(sparar i Hämtningar)</span>
+                    )}
                   </p>
                 </div>
               </button>
@@ -126,39 +167,45 @@ export function SaveDialog({ isOpen, onClose, doc, folderName, originalFileName,
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Filnamn
             </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={fileName}
-                onChange={(e) => setFileName(e.target.value)}
-                className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C0002E]/30 focus:border-[#C0002E] font-mono"
-                placeholder="filnamn.xml"
-                spellCheck={false}
-              />
-            </div>
-            {mode === 'folder' && (
+            <input
+              type="text"
+              value={fileName}
+              onChange={(e) => setFileName(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C0002E]/30 focus:border-[#C0002E] font-mono"
+              placeholder="filnamn.xml"
+              spellCheck={false}
+            />
+            {mode === 'folder' && supportsFilePicker && (
               <p className="text-xs text-gray-400 leading-snug">
-                Ladda ned och spara filen manuellt i mappen{' '}
-                <span className="font-semibold text-gray-600">{folderName}</span> för att ersätta originalet.
+                En dialogruta öppnas där du kan navigera till mappen{' '}
+                <span className="font-semibold text-gray-600">{folderName}</span> och spara direkt.
               </p>
             )}
           </div>
+
+          {errorMsg && (
+            <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+              {errorMsg}
+            </p>
+          )}
         </div>
 
         {/* Footer */}
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+            disabled={isSaving}
+            className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
           >
             Avbryt
           </button>
           <button
-            onClick={handleDownload}
-            className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-[#C0002E] rounded-lg hover:bg-[#A00025] transition-colors"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-[#C0002E] rounded-lg hover:bg-[#A00025] transition-colors disabled:opacity-50"
           >
             <Download className="w-4 h-4" />
-            Ladda ned
+            {isSaving ? 'Sparar...' : mode === 'folder' && supportsFilePicker ? 'Spara' : 'Ladda ned'}
           </button>
         </div>
       </div>

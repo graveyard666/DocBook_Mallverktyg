@@ -1,7 +1,7 @@
-import { useRef, useEffect } from 'react';
 import { FileText, Plus, BookOpen, Folder, FolderOpen, FolderPlus } from 'lucide-react';
 import { exampleTemplates, type ExampleTemplate } from '../data/examples';
 import type { LocalTemplate } from '../hooks/useLocalTemplates';
+import { openFolderPicker } from '../lib/openFolder';
 
 interface Props {
   onLoadExample: (id: string) => void;
@@ -81,18 +81,8 @@ export function Sidebar({
   onOpenFolderDialog,
   onLoadFiles,
 }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.setAttribute('webkitdirectory', '');
-    }
-  }, []);
-
-  function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-    if (files && files.length > 0) onLoadFiles(files);
-    e.target.value = '';
+  function pickFolder() {
+    openFolderPicker(onLoadFiles);
   }
 
   return (
@@ -110,21 +100,13 @@ export function Sidebar({
         </div>
       </div>
 
-      {/* Hidden folder input */}
-      <input
-        ref={inputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={handleFiles}
-      />
-
       {/* Top actions */}
       <div className="px-3 py-3 border-b border-gray-200 space-y-1.5">
         {localTemplates.length === 0 && (
           <button
-            onClick={() => inputRef.current?.click()}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#C0002E] hover:bg-[#A00025] transition-colors shadow-sm"
+            onClick={pickFolder}
+            disabled={isLocalLoading}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#C0002E] hover:bg-[#A00025] transition-colors shadow-sm disabled:opacity-50"
           >
             <FolderOpen className="w-4 h-4 flex-shrink-0" />
             Lägg till mina mallar

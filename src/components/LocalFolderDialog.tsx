@@ -1,5 +1,5 @@
-import { useRef, useEffect } from 'react';
 import { Folder, X, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { openFolderPicker } from '../lib/openFolder';
 
 interface Props {
   isOpen: boolean;
@@ -22,20 +22,10 @@ export function LocalFolderDialog({
   onLoadFiles,
   onClear,
 }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.setAttribute('webkitdirectory', '');
-    }
-  }, []);
-
   if (!isOpen) return null;
 
-  function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-    if (files && files.length > 0) onLoadFiles(files);
-    e.target.value = '';
+  function pickFolder() {
+    openFolderPicker(onLoadFiles);
   }
 
   return (
@@ -56,15 +46,6 @@ export function LocalFolderDialog({
             <X className="w-4 h-4" />
           </button>
         </div>
-
-        {/* Hidden folder input */}
-        <input
-          ref={inputRef}
-          type="file"
-          multiple
-          className="hidden"
-          onChange={handleFiles}
-        />
 
         {/* Body */}
         <div className="px-6 py-5 space-y-4">
@@ -130,7 +111,7 @@ export function LocalFolderDialog({
               </button>
               <div className="flex gap-2">
                 <button
-                  onClick={() => inputRef.current?.click()}
+                  onClick={pickFolder}
                   disabled={isLoading}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
                 >
@@ -153,7 +134,7 @@ export function LocalFolderDialog({
                 Avbryt
               </button>
               <button
-                onClick={() => inputRef.current?.click()}
+                onClick={pickFolder}
                 disabled={isLoading}
                 className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-[#C0002E] rounded-lg hover:bg-[#A00025] transition-colors disabled:opacity-50"
               >
