@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { ChevronDown, ChevronRight, Smartphone, Monitor } from 'lucide-react';
 import type {
   DocBookDocument,
@@ -199,21 +199,40 @@ function BlockRenderer({ block }: { block: SectionBlock }) {
     const paraBlock = block as ParaBlock;
     const isEmpty = (p: typeof paraBlock.paragraphs[0]) =>
       p.nodes.every((n) => n.type === 'text' && n.content.trim().length === 0);
-    const hasAnyContent = paraBlock.paragraphs.some((p) => !isEmpty(p));
-    if (!hasAnyContent) return <div className="h-4" />;
-    return (
-      <>
-        {paraBlock.paragraphs.map((p) =>
-          isEmpty(p) ? (
-            <div key={p.id} className="h-4" />
-          ) : (
-            <p key={p.id} className="text-sm text-[#1A1A1A] leading-relaxed mb-2">
+
+    // Consecutive non-empty paragraphs render inside one <p> joined by <br>.
+    // An empty paragraph produces a spacer between groups.
+    const elements: React.ReactNode[] = [];
+    let groupStart = -1;
+
+    const flushGroup = (end: number) => {
+      if (groupStart < 0) return;
+      const g = paraBlock.paragraphs.slice(groupStart, end);
+      elements.push(
+        <p key={g[0].id} className="text-sm text-[#1A1A1A] leading-relaxed mb-2">
+          {g.map((p, i) => (
+            <Fragment key={p.id}>
+              {i > 0 && <br />}
               <ParaInlineRenderer nodes={p.nodes} />
-            </p>
-          )
-        )}
-      </>
-    );
+            </Fragment>
+          ))}
+        </p>
+      );
+      groupStart = -1;
+    };
+
+    paraBlock.paragraphs.forEach((p, i) => {
+      if (isEmpty(p)) {
+        flushGroup(i);
+        elements.push(<div key={p.id} className="h-4" />);
+      } else {
+        if (groupStart < 0) groupStart = i;
+      }
+    });
+    flushGroup(paraBlock.paragraphs.length);
+
+    if (elements.length === 0) return <div className="h-4" />;
+    return <>{elements}</>;
   }
 
   if (block.type === 'variablelist') {
