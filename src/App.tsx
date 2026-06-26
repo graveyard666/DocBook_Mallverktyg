@@ -130,6 +130,7 @@ export default function App() {
             isLocalLoading={localTemplates.isLoading}
             onLoadLocal={handleLoadLocal}
             onOpenFolderDialog={() => setShowFolderDialog(true)}
+            onDirectFolderPick={localTemplates.openFolderPicker}
             onRescan={localTemplates.rescan}
           />
         </aside>

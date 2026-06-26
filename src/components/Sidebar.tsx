@@ -1,4 +1,4 @@
-import { FileText, Plus, BookOpen, Folder, FolderPlus, RefreshCw } from 'lucide-react';
+import { FileText, Plus, BookOpen, Folder, FolderOpen, FolderPlus, RefreshCw } from 'lucide-react';
 import { exampleTemplates, type ExampleTemplate } from '../data/examples';
 import type { LocalTemplate } from '../hooks/useLocalTemplates';
 
@@ -13,6 +13,7 @@ interface Props {
   isLocalLoading: boolean;
   onLoadLocal: (id: string) => void;
   onOpenFolderDialog: () => void;
+  onDirectFolderPick: () => void;
   onRescan: () => void;
 }
 
@@ -80,6 +81,7 @@ export function Sidebar({
   isLocalLoading,
   onLoadLocal,
   onOpenFolderDialog,
+  onDirectFolderPick,
   onRescan,
 }: Props) {
   return (
@@ -97,8 +99,28 @@ export function Sidebar({
         </div>
       </div>
 
-      {/* New blank */}
-      <div className="px-3 py-3 border-b border-gray-100">
+      {/* Top actions */}
+      <div className="px-3 py-3 border-b border-gray-200 space-y-1.5">
+        {/* Add my templates — shown above new blank when no folder is chosen */}
+        {localTemplates.length === 0 && (
+          isLocalSupported ? (
+            <button
+              onClick={onDirectFolderPick}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#C0002E] hover:bg-[#A00025] transition-colors shadow-sm"
+            >
+              <FolderOpen className="w-4 h-4 flex-shrink-0" />
+              Lägg till mina mallar
+            </button>
+          ) : (
+            <div className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
+              <p className="text-xs text-amber-700 leading-snug">
+                Lokala mallar kräver Chrome eller Edge.
+              </p>
+            </div>
+          )
+        )}
+
+        {/* New blank */}
         <button
           onClick={onNewBlank}
           className={`w-full flex items-center gap-2 px-3 py-2 rounded text-sm text-left transition-colors ${
@@ -124,10 +146,7 @@ export function Sidebar({
                   Mina mallar
                 </span>
                 {folderName && (
-                  <span
-                    className="text-[10px] text-gray-400 truncate"
-                    title={folderName}
-                  >
+                  <span className="text-[10px] text-gray-400 truncate" title={folderName}>
                     {folderName}
                   </span>
                 )}
@@ -191,29 +210,10 @@ export function Sidebar({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-100">
-        {localTemplates.length === 0 && (
-          <div className="px-3 py-2 border-b border-gray-100">
-            {isLocalSupported ? (
-              <button
-                onClick={onOpenFolderDialog}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded text-xs text-gray-400 hover:text-[#C0002E] hover:bg-[#C0002E]/5 transition-colors text-left"
-              >
-                <FolderPlus className="w-3.5 h-3.5 flex-shrink-0" />
-                Lägg till mina mallar...
-              </button>
-            ) : (
-              <p className="px-3 py-1.5 text-[10px] text-gray-400 leading-snug">
-                Lokala mallar kräver Chrome eller Edge.
-              </p>
-            )}
-          </div>
-        )}
-        <div className="px-4 py-3">
-          <p className="text-[10px] text-gray-400 leading-snug">
-            DocBook 5.0 subset enligt Inera-specifikation för 1177 Inkorg
-          </p>
-        </div>
+      <div className="px-4 py-3 border-t border-gray-100">
+        <p className="text-[10px] text-gray-400 leading-snug">
+          DocBook 5.0 subset enligt Inera-specifikation för 1177 Inkorg
+        </p>
       </div>
     </div>
   );
