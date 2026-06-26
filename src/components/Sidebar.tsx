@@ -1,10 +1,19 @@
-import { FileText, Plus, BookOpen } from 'lucide-react';
+import { FileText, Plus, BookOpen, Folder, FolderPlus, RefreshCw } from 'lucide-react';
 import { exampleTemplates, type ExampleTemplate } from '../data/examples';
+import type { LocalTemplate } from '../hooks/useLocalTemplates';
 
 interface Props {
   onLoadExample: (id: string) => void;
   onNewBlank: () => void;
   activeExampleId: string | null;
+  localTemplates: LocalTemplate[];
+  activeLocalId: string | null;
+  folderName: string | null;
+  isLocalSupported: boolean;
+  isLocalLoading: boolean;
+  onLoadLocal: (id: string) => void;
+  onOpenFolderDialog: () => void;
+  onRescan: () => void;
 }
 
 const groups: { id: string; label: string }[] = [
@@ -38,7 +47,41 @@ function ExampleButton({
   );
 }
 
-export function Sidebar({ onLoadExample, onNewBlank, activeExampleId }: Props) {
+function LocalTemplateButton({
+  tmpl,
+  active,
+  onLoad,
+}: {
+  tmpl: LocalTemplate;
+  active: boolean;
+  onLoad: () => void;
+}) {
+  return (
+    <button
+      onClick={onLoad}
+      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded text-left transition-colors ${
+        active ? 'bg-[#C0002E]/10 text-[#C0002E]' : 'text-gray-700 hover:bg-gray-50'
+      }`}
+    >
+      <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+      <span className="text-sm font-semibold leading-tight truncate">{tmpl.name}</span>
+    </button>
+  );
+}
+
+export function Sidebar({
+  onLoadExample,
+  onNewBlank,
+  activeExampleId,
+  localTemplates,
+  activeLocalId,
+  folderName,
+  isLocalSupported,
+  isLocalLoading,
+  onLoadLocal,
+  onOpenFolderDialog,
+  onRescan,
+}: Props) {
   return (
     <div className="h-full flex flex-col bg-white border-r border-gray-200">
       {/* Logo */}
@@ -59,7 +102,7 @@ export function Sidebar({ onLoadExample, onNewBlank, activeExampleId }: Props) {
         <button
           onClick={onNewBlank}
           className={`w-full flex items-center gap-2 px-3 py-2 rounded text-sm text-left transition-colors ${
-            activeExampleId === null
+            activeExampleId === null && activeLocalId === null
               ? 'bg-[#C0002E]/10 text-[#C0002E] font-semibold'
               : 'text-gray-600 hover:bg-gray-50'
           }`}
@@ -69,8 +112,58 @@ export function Sidebar({ onLoadExample, onNewBlank, activeExampleId }: Props) {
         </button>
       </div>
 
-      {/* Grouped examples */}
+      {/* Scrollable area */}
       <div className="flex-1 overflow-y-auto">
+        {/* My templates section */}
+        {localTemplates.length > 0 && (
+          <div className="border-b border-gray-100">
+            <div className="px-4 pt-4 pb-2 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <Folder className="w-3.5 h-3.5 text-[#C0002E] flex-shrink-0" />
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex-shrink-0">
+                  Mina mallar
+                </span>
+                {folderName && (
+                  <span
+                    className="text-[10px] text-gray-400 truncate"
+                    title={folderName}
+                  >
+                    {folderName}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-0.5 flex-shrink-0">
+                <button
+                  onClick={onRescan}
+                  disabled={isLocalLoading}
+                  title="Uppdatera"
+                  className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-40"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isLocalLoading ? 'animate-spin' : ''}`} />
+                </button>
+                <button
+                  onClick={onOpenFolderDialog}
+                  title="Byt mapp"
+                  className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  <FolderPlus className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+            <div className="px-3 space-y-1 pb-4">
+              {localTemplates.map((tmpl) => (
+                <LocalTemplateButton
+                  key={tmpl.id}
+                  tmpl={tmpl}
+                  active={activeLocalId === tmpl.id}
+                  onLoad={() => onLoadLocal(tmpl.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Grouped built-in examples */}
         {groups.map((group, idx) => {
           const items = exampleTemplates.filter((t) => t.group === group.id);
           if (items.length === 0) return null;
@@ -98,10 +191,29 @@ export function Sidebar({ onLoadExample, onNewBlank, activeExampleId }: Props) {
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-gray-100">
-        <p className="text-[10px] text-gray-400 leading-snug">
-          DocBook 5.0 subset enligt Inera-specifikation för 1177 Inkorg
-        </p>
+      <div className="border-t border-gray-100">
+        {localTemplates.length === 0 && (
+          <div className="px-3 py-2 border-b border-gray-100">
+            {isLocalSupported ? (
+              <button
+                onClick={onOpenFolderDialog}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded text-xs text-gray-400 hover:text-[#C0002E] hover:bg-[#C0002E]/5 transition-colors text-left"
+              >
+                <FolderPlus className="w-3.5 h-3.5 flex-shrink-0" />
+                Lägg till mina mallar...
+              </button>
+            ) : (
+              <p className="px-3 py-1.5 text-[10px] text-gray-400 leading-snug">
+                Lokala mallar kräver Chrome eller Edge.
+              </p>
+            )}
+          </div>
+        )}
+        <div className="px-4 py-3">
+          <p className="text-[10px] text-gray-400 leading-snug">
+            DocBook 5.0 subset enligt Inera-specifikation för 1177 Inkorg
+          </p>
+        </div>
       </div>
     </div>
   );
