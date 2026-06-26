@@ -259,12 +259,11 @@ const vgrHpvVaccination = `<?xml version="1.0" encoding="UTF-8"?>
 <article>
   <section>
     <title>Gratis för killar mellan 18 och 26 år</title>
-    <para>Hej!
-Du som är kille mellan 18 och 26 år, har du vaccinerat dig mot HPV?
-Passa på medan vaccinationen är gratis och boka din tid redan i dag.
-HPV är ett vanligt virus som sprids vid sexuell kontakt. Det kan orsaka cancer i penis, ändtarm, mun och svalg.
-Vaccination ger ett bra skydd.
-</para>
+    <para>Hej!</para>
+    <para>Du som är kille mellan 18 och 26 år, har du vaccinerat dig mot HPV?</para>
+    <para>Passa på medan vaccinationen är gratis och boka din tid redan i dag.</para>
+    <para>HPV är ett vanligt virus som sprids vid sexuell kontakt. Det kan orsaka cancer i penis, ändtarm, mun och svalg.</para>
+    <para>Vaccination ger ett bra skydd.</para>
   </section>
   <section>
     <title><emphasis role="information">Läs mer och boka tid via 1177.se</emphasis></title>
@@ -272,9 +271,8 @@ Vaccination ger ett bra skydd.
   </section>
   <section>
     <title></title>
-    <para>Vaccinet som används heter Gardasil 9. Det skyddar mot nio HPV-typer och har inga kända allvarliga biverkningar.
-För de allra flesta räcker det med två doser med 6–12 månaders mellanrum.
-</para>
+    <para>Vaccinet som används heter Gardasil 9. Det skyddar mot nio HPV-typer och har inga kända allvarliga biverkningar.</para>
+    <para>För de allra flesta räcker det med två doser med 6–12 månaders mellanrum.</para>
   </section>
 </article>`;
 
