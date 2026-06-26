@@ -57,16 +57,6 @@ export default function App() {
     setIsDirty(false);
   }
 
-  // Derive the original .xml filename for the currently active local template
-  const activeLocalTemplate = activeLocalId
-    ? localTemplates.templates.find((t) => t.id === activeLocalId)
-    : null;
-  const originalFileName = activeLocalTemplate
-    ? activeLocalTemplate.id.includes('/')
-      ? activeLocalTemplate.id.split('/').pop() ?? `${activeLocalTemplate.name}.xml`
-      : `${activeLocalTemplate.name}.xml`
-    : null;
-
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-100">
       {/* Top bar */}
@@ -172,8 +162,6 @@ export default function App() {
         isOpen={showSaveDialog}
         onClose={() => setShowSaveDialog(false)}
         doc={doc}
-        folderName={localTemplates.folderName}
-        originalFileName={originalFileName}
         onSaved={() => setIsDirty(false)}
       />
     </div>
