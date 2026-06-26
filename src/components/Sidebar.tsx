@@ -1,4 +1,5 @@
-import { FileText, Plus, BookOpen, Folder, FolderOpen, FolderPlus, RefreshCw } from 'lucide-react';
+import { useRef } from 'react';
+import { FileText, Plus, BookOpen, Folder, FolderOpen, FolderPlus } from 'lucide-react';
 import { exampleTemplates, type ExampleTemplate } from '../data/examples';
 import type { LocalTemplate } from '../hooks/useLocalTemplates';
 
@@ -9,12 +10,10 @@ interface Props {
   localTemplates: LocalTemplate[];
   activeLocalId: string | null;
   folderName: string | null;
-  isLocalSupported: boolean;
   isLocalLoading: boolean;
   onLoadLocal: (id: string) => void;
   onOpenFolderDialog: () => void;
-  onDirectFolderPick: () => void;
-  onRescan: () => void;
+  onLoadFiles: (files: FileList) => Promise<void>;
 }
 
 const groups: { id: string; label: string }[] = [
@@ -77,13 +76,19 @@ export function Sidebar({
   localTemplates,
   activeLocalId,
   folderName,
-  isLocalSupported,
   isLocalLoading,
   onLoadLocal,
   onOpenFolderDialog,
-  onDirectFolderPick,
-  onRescan,
+  onLoadFiles,
 }: Props) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (files && files.length > 0) onLoadFiles(files);
+    e.target.value = '';
+  }
+
   return (
     <div className="h-full flex flex-col bg-white border-r border-gray-200">
       {/* Logo */}
@@ -99,25 +104,27 @@ export function Sidebar({
         </div>
       </div>
 
+      {/* Hidden folder input */}
+      <input
+        ref={inputRef}
+        type="file"
+        // @ts-expect-error webkitdirectory is non-standard but widely supported
+        webkitdirectory=""
+        className="hidden"
+        onChange={handleFiles}
+      />
+
       {/* Top actions */}
       <div className="px-3 py-3 border-b border-gray-200 space-y-1.5">
         {/* Add my templates — shown above new blank when no folder is chosen */}
         {localTemplates.length === 0 && (
-          isLocalSupported ? (
-            <button
-              onClick={onDirectFolderPick}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#C0002E] hover:bg-[#A00025] transition-colors shadow-sm"
-            >
-              <FolderOpen className="w-4 h-4 flex-shrink-0" />
-              Lägg till mina mallar
-            </button>
-          ) : (
-            <div className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
-              <p className="text-xs text-amber-700 leading-snug">
-                Lokala mallar kräver Chrome eller Edge.
-              </p>
-            </div>
-          )
+          <button
+            onClick={() => inputRef.current?.click()}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#C0002E] hover:bg-[#A00025] transition-colors shadow-sm"
+          >
+            <FolderOpen className="w-4 h-4 flex-shrink-0" />
+            Lägg till mina mallar
+          </button>
         )}
 
         {/* New blank */}
@@ -151,23 +158,14 @@ export function Sidebar({
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-0.5 flex-shrink-0">
-                <button
-                  onClick={onRescan}
-                  disabled={isLocalLoading}
-                  title="Uppdatera"
-                  className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-40"
-                >
-                  <RefreshCw className={`w-3 h-3 ${isLocalLoading ? 'animate-spin' : ''}`} />
-                </button>
-                <button
-                  onClick={onOpenFolderDialog}
-                  title="Byt mapp"
-                  className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                >
-                  <FolderPlus className="w-3 h-3" />
-                </button>
-              </div>
+              <button
+                onClick={onOpenFolderDialog}
+                title="Byt mapp"
+                className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
+                disabled={isLocalLoading}
+              >
+                <FolderPlus className="w-3 h-3" />
+              </button>
             </div>
             <div className="px-3 space-y-1 pb-4">
               {localTemplates.map((tmpl) => (

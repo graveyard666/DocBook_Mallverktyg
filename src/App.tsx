@@ -17,7 +17,6 @@ export default function App() {
   const [doc, setDoc] = useState<DocBookDocument>(createBlankDocument);
   const [activeExampleId, setActiveExampleId] = useState<string | null>(null);
   const [activeLocalId, setActiveLocalId] = useState<string | null>(null);
-  const [activeFileHandle, setActiveFileHandle] = useState<FileSystemFileHandle | null>(null);
   const [rightPanel, setRightPanel] = useState<RightPanel>('preview');
   const [showFolderDialog, setShowFolderDialog] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -30,7 +29,6 @@ export default function App() {
       setDoc(loaded);
       setActiveExampleId(id);
       setActiveLocalId(null);
-      setActiveFileHandle(null);
     }
   }
 
@@ -38,7 +36,6 @@ export default function App() {
     setDoc(createBlankDocument());
     setActiveExampleId(null);
     setActiveLocalId(null);
-    setActiveFileHandle(null);
   }
 
   function handleLoadLocal(id: string) {
@@ -49,15 +46,7 @@ export default function App() {
     setDoc({ ...parsed, name: tmpl.name });
     setActiveLocalId(id);
     setActiveExampleId(null);
-    setActiveFileHandle(tmpl.fileHandle);
   }
-
-  function handleSavedAs(newHandle: FileSystemFileHandle) {
-    setActiveFileHandle(newHandle);
-    localTemplates.rescan();
-  }
-
-  const isFileApiSupported = 'showSaveFilePicker' in window;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-100">
@@ -75,16 +64,14 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Save button — shown in supporting browsers */}
-          {isFileApiSupported && (
-            <button
-              onClick={() => setShowSaveDialog(true)}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm"
-            >
-              <Save className="w-3.5 h-3.5" />
-              Spara
-            </button>
-          )}
+          {/* Save / download button */}
+          <button
+            onClick={() => setShowSaveDialog(true)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm"
+          >
+            <Save className="w-3.5 h-3.5" />
+            Spara
+          </button>
 
           {/* Right panel toggle */}
           <div className="flex items-center rounded-xl overflow-hidden border border-gray-200 shadow-sm">
@@ -126,12 +113,10 @@ export default function App() {
             localTemplates={localTemplates.templates}
             activeLocalId={activeLocalId}
             folderName={localTemplates.folderName}
-            isLocalSupported={localTemplates.isSupported}
             isLocalLoading={localTemplates.isLoading}
             onLoadLocal={handleLoadLocal}
             onOpenFolderDialog={() => setShowFolderDialog(true)}
-            onDirectFolderPick={localTemplates.openFolderPicker}
-            onRescan={localTemplates.rescan}
+            onLoadFiles={localTemplates.loadFromFileList}
           />
         </aside>
 
@@ -155,11 +140,10 @@ export default function App() {
         isOpen={showFolderDialog}
         onClose={() => setShowFolderDialog(false)}
         isLoading={localTemplates.isLoading}
-        isSupported={localTemplates.isSupported}
         folderName={localTemplates.folderName}
         templateCount={localTemplates.templates.length}
         skippedCount={localTemplates.skippedCount}
-        onOpenPicker={localTemplates.openFolderPicker}
+        onLoadFiles={localTemplates.loadFromFileList}
         onClear={localTemplates.clearFolder}
       />
 
@@ -167,8 +151,6 @@ export default function App() {
         isOpen={showSaveDialog}
         onClose={() => setShowSaveDialog(false)}
         doc={doc}
-        activeFileHandle={activeFileHandle}
-        onSavedAs={handleSavedAs}
       />
     </div>
   );

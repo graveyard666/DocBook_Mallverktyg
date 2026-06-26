@@ -1,14 +1,14 @@
-import { Folder, X, RefreshCw, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { useRef } from 'react';
+import { Folder, X, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   isLoading: boolean;
-  isSupported: boolean;
   folderName: string | null;
   templateCount: number;
   skippedCount: number;
-  onOpenPicker: () => Promise<void>;
+  onLoadFiles: (files: FileList) => Promise<void>;
   onClear: () => void;
 }
 
@@ -16,14 +16,21 @@ export function LocalFolderDialog({
   isOpen,
   onClose,
   isLoading,
-  isSupported,
   folderName,
   templateCount,
   skippedCount,
-  onOpenPicker,
+  onLoadFiles,
   onClear,
 }: Props) {
+  const inputRef = useRef<HTMLInputElement>(null);
   if (!isOpen) return null;
+
+  function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (files && files.length > 0) onLoadFiles(files);
+    // Reset so the same folder can be re-selected
+    e.target.value = '';
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -44,91 +51,71 @@ export function LocalFolderDialog({
           </button>
         </div>
 
+        {/* Hidden folder input */}
+        <input
+          ref={inputRef}
+          type="file"
+          // @ts-expect-error webkitdirectory is non-standard but widely supported
+          webkitdirectory=""
+          className="hidden"
+          onChange={handleFiles}
+        />
+
         {/* Body */}
         <div className="px-6 py-5 space-y-4">
-          {!isSupported ? (
-            <div className="flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-              <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-semibold text-amber-800">Stöds inte i din webbläsare</p>
-                <p className="text-sm text-amber-700 mt-1 leading-relaxed">
-                  Den här funktionen kräver Chrome eller Edge. Firefox och Safari stöder inte
-                  File System Access API.
-                </p>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Välj en lokal mapp på din dator. Alla{' '}
+            <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">.xml</code>
+            -filer som innehåller giltig DocBook-kod visas som mallar under{' '}
+            <strong className="text-gray-800">Mina mallar</strong> i sidopanelen.
+          </p>
+
+          {folderName && (
+            <div className="flex items-center gap-3 p-3.5 bg-gray-50 border border-gray-200 rounded-xl">
+              <Folder className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-800 truncate">{folderName}</p>
+                {isLoading ? (
+                  <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Skannar filer...
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {templateCount} mall{templateCount !== 1 ? 'ar' : ''} hittade
+                    {skippedCount > 0 && (
+                      <span className="text-amber-600">
+                        {' '}— {skippedCount} fil{skippedCount !== 1 ? 'er' : ''} ignorerade
+                      </span>
+                    )}
+                  </p>
+                )}
               </div>
             </div>
-          ) : (
-            <>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Välj en lokal mapp på din dator. Alla{' '}
-                <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">.xml</code>
-                -filer som innehåller giltig DocBook-kod visas som mallar under{' '}
-                <strong className="text-gray-800">Mina mallar</strong> i sidopanelen.
-              </p>
+          )}
 
-              {folderName && (
-                <div className="flex items-center gap-3 p-3.5 bg-gray-50 border border-gray-200 rounded-xl">
-                  <Folder className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{folderName}</p>
-                    {isLoading ? (
-                      <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
-                        <Loader2 className="w-3 h-3 animate-spin" /> Skannar filer...
-                      </p>
-                    ) : (
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {templateCount} mall{templateCount !== 1 ? 'ar' : ''} hittade
-                        {skippedCount > 0 && (
-                          <span className="text-amber-600">
-                            {' '}
-                            — {skippedCount} fil{skippedCount !== 1 ? 'er' : ''} ignorerade
-                          </span>
-                        )}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
+          {!isLoading && templateCount > 0 && (
+            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3.5 py-2.5 rounded-xl border border-green-200">
+              <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+              <span>
+                {templateCount} giltig{templateCount !== 1 ? 'a' : ''} DocBook-mall
+                {templateCount !== 1 ? 'ar' : ''} redo att använda
+              </span>
+            </div>
+          )}
 
-              {!isLoading && templateCount > 0 && (
-                <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3.5 py-2.5 rounded-xl border border-green-200">
-                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                  <span>
-                    {templateCount} giltig{templateCount !== 1 ? 'a' : ''} DocBook-mall
-                    {templateCount !== 1 ? 'ar' : ''} redo att använda
-                  </span>
-                </div>
-              )}
-
-              {!isLoading && skippedCount > 0 && (
-                <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 px-3.5 py-2.5 rounded-xl border border-amber-200">
-                  <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                  <span>
-                    {skippedCount} fil{skippedCount !== 1 ? 'er' : ''} ignorerade — inte giltig
-                    DocBook XML
-                  </span>
-                </div>
-              )}
-
-              <p className="text-xs text-gray-400">
-                Fungerar i Chrome och Edge — stöds ej i Firefox och Safari.
-              </p>
-            </>
+          {!isLoading && skippedCount > 0 && (
+            <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 px-3.5 py-2.5 rounded-xl border border-amber-200">
+              <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+              <span>
+                {skippedCount} fil{skippedCount !== 1 ? 'er' : ''} ignorerade — inte giltig DocBook XML
+              </span>
+            </div>
           )}
         </div>
 
         {/* Footer */}
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3">
-          {!isSupported ? (
-            <div className="ml-auto">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                Stäng
-              </button>
-            </div>
-          ) : folderName ? (
+          {folderName ? (
             <>
               <button
                 onClick={onClear}
@@ -138,11 +125,10 @@ export function LocalFolderDialog({
               </button>
               <div className="flex gap-2">
                 <button
-                  onClick={onOpenPicker}
+                  onClick={() => inputRef.current?.click()}
                   disabled={isLoading}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
                 >
-                  <RefreshCw className="w-3.5 h-3.5" />
                   Byt mapp
                 </button>
                 <button
@@ -162,15 +148,11 @@ export function LocalFolderDialog({
                 Avbryt
               </button>
               <button
-                onClick={onOpenPicker}
+                onClick={() => inputRef.current?.click()}
                 disabled={isLoading}
                 className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-[#C0002E] rounded-lg hover:bg-[#A00025] transition-colors disabled:opacity-50"
               >
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Folder className="w-4 h-4" />
-                )}
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Folder className="w-4 h-4" />}
                 Välj mapp
               </button>
             </>
