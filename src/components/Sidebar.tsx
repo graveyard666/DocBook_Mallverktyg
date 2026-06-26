@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { FileText, Plus, BookOpen, Folder, FolderOpen, FolderPlus } from 'lucide-react';
 import { exampleTemplates, type ExampleTemplate } from '../data/examples';
 import type { LocalTemplate } from '../hooks/useLocalTemplates';
@@ -83,6 +83,12 @@ export function Sidebar({
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.setAttribute('webkitdirectory', '');
+    }
+  }, []);
+
   function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (files && files.length > 0) onLoadFiles(files);
@@ -108,15 +114,13 @@ export function Sidebar({
       <input
         ref={inputRef}
         type="file"
-        // @ts-expect-error webkitdirectory is non-standard but widely supported
-        webkitdirectory=""
+        multiple
         className="hidden"
         onChange={handleFiles}
       />
 
       {/* Top actions */}
       <div className="px-3 py-3 border-b border-gray-200 space-y-1.5">
-        {/* Add my templates — shown above new blank when no folder is chosen */}
         {localTemplates.length === 0 && (
           <button
             onClick={() => inputRef.current?.click()}
@@ -127,7 +131,6 @@ export function Sidebar({
           </button>
         )}
 
-        {/* New blank */}
         <button
           onClick={onNewBlank}
           className={`w-full flex items-center gap-2 px-3 py-2 rounded text-sm text-left transition-colors ${
@@ -143,7 +146,6 @@ export function Sidebar({
 
       {/* Scrollable area */}
       <div className="flex-1 overflow-y-auto">
-        {/* My templates section */}
         {localTemplates.length > 0 && (
           <div className="border-b border-gray-100">
             <div className="px-4 pt-4 pb-2 flex items-center justify-between gap-2">
@@ -180,7 +182,6 @@ export function Sidebar({
           </div>
         )}
 
-        {/* Grouped built-in examples */}
         {groups.map((group, idx) => {
           const items = exampleTemplates.filter((t) => t.group === group.id);
           if (items.length === 0) return null;

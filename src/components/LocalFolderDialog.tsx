@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { Folder, X, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 
 interface Props {
@@ -23,12 +23,18 @@ export function LocalFolderDialog({
   onClear,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.setAttribute('webkitdirectory', '');
+    }
+  }, []);
+
   if (!isOpen) return null;
 
   function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (files && files.length > 0) onLoadFiles(files);
-    // Reset so the same folder can be re-selected
     e.target.value = '';
   }
 
@@ -55,8 +61,7 @@ export function LocalFolderDialog({
         <input
           ref={inputRef}
           type="file"
-          // @ts-expect-error webkitdirectory is non-standard but widely supported
-          webkitdirectory=""
+          multiple
           className="hidden"
           onChange={handleFiles}
         />

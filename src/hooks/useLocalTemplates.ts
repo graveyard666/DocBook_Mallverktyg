@@ -27,11 +27,10 @@ export function useLocalTemplates(): LocalTemplatesState {
     const loaded: LocalTemplate[] = [];
     let skipped = 0;
 
-    // Derive folder name from the first file's webkitRelativePath
     let folder: string | null = null;
     if (files.length > 0) {
       const rel = files[0].webkitRelativePath;
-      folder = rel ? rel.split('/')[0] : null;
+      folder = rel ? rel.split('/')[0] : files[0].name.replace(/\.xml$/i, '');
     }
 
     for (let i = 0; i < files.length; i++) {
@@ -41,7 +40,9 @@ export function useLocalTemplates(): LocalTemplatesState {
         const xml = await file.text();
         const doc = parseDocBookXml(xml);
         if (doc) {
-          loaded.push({ id: file.webkitRelativePath || file.name, name: file.name.replace(/\.xml$/i, ''), xml });
+          // Use webkitRelativePath when available; fall back to index+name for uniqueness
+          const id = file.webkitRelativePath || `${i}_${file.name}`;
+          loaded.push({ id, name: file.name.replace(/\.xml$/i, ''), xml });
         } else {
           skipped++;
         }

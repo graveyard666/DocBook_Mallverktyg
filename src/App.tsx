@@ -15,6 +15,7 @@ type RightPanel = 'preview' | 'code';
 
 export default function App() {
   const [doc, setDoc] = useState<DocBookDocument>(createBlankDocument);
+  const [isDirty, setIsDirty] = useState(false);
   const [activeExampleId, setActiveExampleId] = useState<string | null>(null);
   const [activeLocalId, setActiveLocalId] = useState<string | null>(null);
   const [rightPanel, setRightPanel] = useState<RightPanel>('preview');
@@ -23,12 +24,18 @@ export default function App() {
 
   const localTemplates = useLocalTemplates();
 
+  function handleDocUpdate(updated: DocBookDocument) {
+    setDoc(updated);
+    setIsDirty(true);
+  }
+
   function handleLoadExample(id: string) {
     const loaded = loadExampleDocument(id);
     if (loaded) {
       setDoc(loaded);
       setActiveExampleId(id);
       setActiveLocalId(null);
+      setIsDirty(false);
     }
   }
 
@@ -36,6 +43,7 @@ export default function App() {
     setDoc(createBlankDocument());
     setActiveExampleId(null);
     setActiveLocalId(null);
+    setIsDirty(false);
   }
 
   function handleLoadLocal(id: string) {
@@ -46,7 +54,18 @@ export default function App() {
     setDoc({ ...parsed, name: tmpl.name });
     setActiveLocalId(id);
     setActiveExampleId(null);
+    setIsDirty(false);
   }
+
+  // Derive the original .xml filename for the currently active local template
+  const activeLocalTemplate = activeLocalId
+    ? localTemplates.templates.find((t) => t.id === activeLocalId)
+    : null;
+  const originalFileName = activeLocalTemplate
+    ? activeLocalTemplate.id.includes('/')
+      ? activeLocalTemplate.id.split('/').pop() ?? `${activeLocalTemplate.name}.xml`
+      : `${activeLocalTemplate.name}.xml`
+    : null;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-100">
@@ -64,14 +83,16 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Save / download button */}
-          <button
-            onClick={() => setShowSaveDialog(true)}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm"
-          >
-            <Save className="w-3.5 h-3.5" />
-            Spara
-          </button>
+          {/* Save button — only shown when there are unsaved changes */}
+          {isDirty && (
+            <button
+              onClick={() => setShowSaveDialog(true)}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-white bg-[#C0002E] rounded-lg hover:bg-[#A00025] transition-colors shadow-sm"
+            >
+              <Save className="w-3.5 h-3.5" />
+              Spara
+            </button>
+          )}
 
           {/* Right panel toggle */}
           <div className="flex items-center rounded-xl overflow-hidden border border-gray-200 shadow-sm">
@@ -122,7 +143,7 @@ export default function App() {
 
         {/* Center: editor */}
         <main className="flex-1 flex flex-col overflow-hidden border-x border-gray-200">
-          <DocumentEditor doc={doc} onUpdate={setDoc} />
+          <DocumentEditor doc={doc} onUpdate={handleDocUpdate} />
         </main>
 
         {/* Right: preview or code */}
@@ -151,6 +172,9 @@ export default function App() {
         isOpen={showSaveDialog}
         onClose={() => setShowSaveDialog(false)}
         doc={doc}
+        folderName={localTemplates.folderName}
+        originalFileName={originalFileName}
+        onSaved={() => setIsDirty(false)}
       />
     </div>
   );
