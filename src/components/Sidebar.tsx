@@ -1,4 +1,4 @@
-import { FileText, Plus, BookOpen, Folder, FolderOpen, FolderPlus } from 'lucide-react';
+import { FileText, Plus, BookOpen, Folder, FolderOpen, FolderPlus, RefreshCw } from 'lucide-react';
 import { exampleTemplates, type ExampleTemplate } from '../data/examples';
 import type { LocalTemplate } from '../hooks/useLocalTemplates';
 import { openFolderPicker } from '../lib/openFolder';
@@ -14,6 +14,7 @@ interface Props {
   onLoadLocal: (id: string) => void;
   onOpenFolderDialog: () => void;
   onLoadFiles: (files: FileList) => Promise<void>;
+  onRescanFolder: () => Promise<void>;
 }
 
 const groups: { id: string; label: string; logo?: string }[] = [
@@ -80,6 +81,7 @@ export function Sidebar({
   onLoadLocal,
   onOpenFolderDialog,
   onLoadFiles,
+  onRescanFolder,
 }: Props) {
   function pickFolder() {
     openFolderPicker(onLoadFiles);
@@ -130,7 +132,7 @@ export function Sidebar({
       <div className="flex-1 overflow-y-auto">
         {localTemplates.length > 0 && (
           <div className="border-b border-gray-100">
-            <div className="px-4 pt-4 pb-2 flex items-center justify-between gap-2">
+            <div className="px-4 pt-4 pb-1 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <Folder className="w-3.5 h-3.5 text-[#C0002E] flex-shrink-0" />
                 <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex-shrink-0">
@@ -142,15 +144,28 @@ export function Sidebar({
                   </span>
                 )}
               </div>
-              <button
-                onClick={onOpenFolderDialog}
-                title="Byt mapp"
-                className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
-                disabled={isLocalLoading}
-              >
-                <FolderPlus className="w-3 h-3" />
-              </button>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={onRescanFolder}
+                  title="Skanna mappen igen"
+                  disabled={isLocalLoading}
+                  className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-40"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isLocalLoading ? 'animate-spin' : ''}`} />
+                </button>
+                <button
+                  onClick={onOpenFolderDialog}
+                  title="Byt mapp"
+                  disabled={isLocalLoading}
+                  className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-40"
+                >
+                  <FolderPlus className="w-3 h-3" />
+                </button>
+              </div>
             </div>
+            <p className="px-4 pb-2 text-[10px] text-gray-400 leading-snug">
+              XML-mallar inlasta fran din lokala mapp
+            </p>
             <div className="px-3 space-y-1 pb-4">
               {localTemplates.map((tmpl) => (
                 <LocalTemplateButton

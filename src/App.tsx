@@ -128,6 +128,7 @@ export default function App() {
             onLoadLocal={handleLoadLocal}
             onOpenFolderDialog={() => setShowFolderDialog(true)}
             onLoadFiles={localTemplates.loadFromFileList}
+            onRescanFolder={localTemplates.rescanFolder}
           />
         </aside>
 

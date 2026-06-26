@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { parseDocBookXml } from '../lib/parser';
 
 export interface LocalTemplate {
@@ -13,6 +13,7 @@ export interface LocalTemplatesState {
   folderName: string | null;
   skippedCount: number;
   loadFromFileList: (files: FileList) => Promise<void>;
+  rescanFolder: () => Promise<void>;
   clearFolder: () => void;
 }
 
@@ -21,8 +22,10 @@ export function useLocalTemplates(): LocalTemplatesState {
   const [templates, setTemplates] = useState<LocalTemplate[]>([]);
   const [folderName, setFolderName] = useState<string | null>(null);
   const [skippedCount, setSkippedCount] = useState(0);
+  const lastFileListRef = useRef<FileList | null>(null);
 
   const loadFromFileList = useCallback(async (files: FileList) => {
+    lastFileListRef.current = files;
     setIsLoading(true);
     const loaded: LocalTemplate[] = [];
     let skipped = 0;
@@ -58,11 +61,18 @@ export function useLocalTemplates(): LocalTemplatesState {
     setIsLoading(false);
   }, []);
 
+  const rescanFolder = useCallback(async () => {
+    if (lastFileListRef.current) {
+      await loadFromFileList(lastFileListRef.current);
+    }
+  }, [loadFromFileList]);
+
   const clearFolder = useCallback(() => {
+    lastFileListRef.current = null;
     setTemplates([]);
     setFolderName(null);
     setSkippedCount(0);
   }, []);
 
-  return { isLoading, templates, folderName, skippedCount, loadFromFileList, clearFolder };
+  return { isLoading, templates, folderName, skippedCount, loadFromFileList, rescanFolder, clearFolder };
 }
