@@ -409,6 +409,7 @@ interface Props {
   placeholder?: string;
   className?: string;
   onEnter?: () => void;
+  onShiftEnter?: () => void;
   multiline?: boolean;
   showFormattingToolbar?: boolean;
 }
@@ -419,6 +420,7 @@ export function InlineEditor({
   placeholder = '',
   className = '',
   onEnter,
+  onShiftEnter,
   multiline = false,
   showFormattingToolbar = false,
 }: Props) {
@@ -458,7 +460,14 @@ export function InlineEditor({
 
   function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (e.key === 'Enter') {
-      if (e.shiftKey && multiline) return;
+      if (e.shiftKey) {
+        if (onShiftEnter) {
+          e.preventDefault();
+          onShiftEnter();
+          return;
+        }
+        if (multiline) return;
+      }
       e.preventDefault();
       onEnter?.();
     }

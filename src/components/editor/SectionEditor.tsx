@@ -22,19 +22,22 @@ function ParaBlockEditor({
   block,
   onUpdate,
   onEnter,
+  onShiftEnter,
 }: {
   block: ParaBlock;
   onUpdate: (b: ParaBlock) => void;
   onEnter: () => void;
+  onShiftEnter: () => void;
 }) {
   return (
     <InlineEditor
       nodes={block.children}
       onChange={(nodes) => onUpdate({ ...block, children: nodes })}
-      placeholder="Skriv stycketext… (Shift+Enter = radbrytning, Enter = nytt stycke)"
+      placeholder="Skriv stycketext… (Enter = nytt stycke, Shift+Enter = nytt stycke)"
       className="text-sm text-gray-800 leading-relaxed w-full"
       multiline
       onEnter={onEnter}
+      onShiftEnter={onShiftEnter}
       showFormattingToolbar
     />
   );
@@ -368,7 +371,7 @@ export function SectionEditor({
         {section.blocks.map((block, idx) => {
           const blockLabel =
             block.type === 'para'
-              ? 'Stycke'
+              ? 'Stycke — Enter eller Shift+Enter = nytt stycke'
               : block.type === 'variablelist'
               ? 'Variabellista'
               : `Lista (${(block as ItemizedListBlock).mark === 'bullet' ? 'punkt' : 'streck'})`;
@@ -388,6 +391,16 @@ export function SectionEditor({
                   block={block as ParaBlock}
                   onUpdate={(b) => updateBlock(block.id, b)}
                   onEnter={() => {
+                    const newBlock: ParaBlock = {
+                      id: uid(),
+                      type: 'para',
+                      children: [{ type: 'text', content: '' }],
+                    };
+                    const blocks = [...section.blocks];
+                    blocks.splice(idx + 1, 0, newBlock);
+                    onUpdate({ ...section, blocks });
+                  }}
+                  onShiftEnter={() => {
                     const newBlock: ParaBlock = {
                       id: uid(),
                       type: 'para',
