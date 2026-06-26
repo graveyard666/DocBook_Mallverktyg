@@ -171,7 +171,12 @@ export function Sidebar({
             <div key={group.id} className={idx > 0 ? 'border-t border-gray-100' : ''}>
               <div className="px-4 pt-4 pb-2 flex items-center gap-2">
                 {group.logo ? (
-                  <img src={group.logo} alt={group.label} className="h-5 w-auto object-contain" />
+                  <>
+                    <img src={group.logo} alt={group.label} className="h-5 w-auto object-contain" />
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      {group.label}
+                    </span>
+                  </>
                 ) : (
                   <>
                     <BookOpen className="w-3.5 h-3.5 text-gray-400" />
