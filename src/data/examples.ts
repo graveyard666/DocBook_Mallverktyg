@@ -255,6 +255,29 @@ välkommen att kontakta Västra Götalandsregionen via telefon
   </section>
 </article>`;
 
+const vgrHpvVaccination = `<?xml version="1.0" encoding="UTF-8"?>
+<article>
+  <section>
+    <title>Gratis för killar mellan 18 och 26 år</title>
+    <para>Hej!
+Du som är kille mellan 18 och 26 år, har du vaccinerat dig mot HPV?
+Passa på medan vaccinationen är gratis och boka din tid redan i dag.
+HPV är ett vanligt virus som sprids vid sexuell kontakt. Det kan orsaka cancer i penis, ändtarm, mun och svalg.
+Vaccination ger ett bra skydd.
+</para>
+  </section>
+  <section>
+    <title><emphasis role="information">Läs mer och boka tid via 1177.se</emphasis></title>
+    <para><link url="https://www.1177.se/Vastra-Gotaland/hpv-vaccination?mtm_campaign=VGR_HPV-vaccinering_2026&amp;mtm_cid=vgr-hpv-26-digitaltutskick" type="_blank">Vaccination mot HPV</link></para>
+  </section>
+  <section>
+    <title></title>
+    <para>Vaccinet som används heter Gardasil 9. Det skyddar mot nio HPV-typer och har inga kända allvarliga biverkningar.
+För de allra flesta räcker det med två doser med 6–12 månaders mellanrum.
+</para>
+  </section>
+</article>`;
+
 export interface ExampleTemplate {
   id: string;
   name: string;
@@ -305,6 +328,13 @@ export const exampleTemplates: ExampleTemplate[] = [
     description: 'Information om stängd VC med erbjudande om ny listning',
     group: 'vgr',
     xml: vgrCareUnitClosed,
+  },
+  {
+    id: 'vgr-hpv-vaccination',
+    name: 'HPV-vaccination killar 18-26',
+    description: 'Information om gratis HPV-vaccination för killar med länk till 1177',
+    group: 'vgr',
+    xml: vgrHpvVaccination,
   },
 ];
 
