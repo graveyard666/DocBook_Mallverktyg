@@ -16,10 +16,10 @@ interface Props {
   onLoadFiles: (files: FileList) => Promise<void>;
 }
 
-const groups: { id: string; label: string }[] = [
+const groups: { id: string; label: string; logo?: string }[] = [
   { id: 'inera', label: 'Inera-exempel' },
-  { id: 'region-dalarna', label: 'Region Dalarna' },
-  { id: 'vgr', label: 'VGR' },
+  { id: 'region-dalarna', label: 'Region Dalarna', logo: '/assets/logos/dalarna.png' },
+  { id: 'vgr', label: 'VGR', logo: '/assets/logos/VGR.png' },
 ];
 
 function ExampleButton({
@@ -170,10 +170,16 @@ export function Sidebar({
           return (
             <div key={group.id} className={idx > 0 ? 'border-t border-gray-100' : ''}>
               <div className="px-4 pt-4 pb-2 flex items-center gap-2">
-                <BookOpen className="w-3.5 h-3.5 text-gray-400" />
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  {group.label}
-                </span>
+                {group.logo ? (
+                  <img src={group.logo} alt={group.label} className="h-5 w-auto object-contain" />
+                ) : (
+                  <>
+                    <BookOpen className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      {group.label}
+                    </span>
+                  </>
+                )}
               </div>
               <div className="px-3 space-y-1 pb-4">
                 {items.map((tmpl) => (
