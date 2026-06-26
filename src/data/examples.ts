@@ -227,9 +227,9 @@ const vgrCareUnitClosed = `<?xml version="1.0" encoding="UTF-8"?>
 <article>
   <section>
     <title>Hej!</title>
-    <para>Du har tidigare valt NAMN_PÅ_VC som din vårdcentral
-</para>
+    <para>Du har tidigare valt NAMN_PÅ_VC som din vårdcentral.</para>
     <para>Denna vårdcentral har nu upphört, då de inte uppfyllt de krav som Västra Götalandsregionen ställer. </para>
+    <para></para>
     <para>Därför erbjuder vi dig i stället den vårdcentral som ligger närmast din folkbokföringsadress. </para>
   </section>
   <section>
@@ -238,19 +238,14 @@ const vgrCareUnitClosed = `<?xml version="1.0" encoding="UTF-8"?>
   </section>
   <section>
     <title></title>
-    <para>Om du vill välja en annan vårdcentral kan du göra det. Kontakta då
-den vårdcentral som du vill välja så hjälper de dig.</para>
-    <para>De vårdcentraler som du kan välja mellan och som ingår i
-vårdvalsmodellen Vårdval vårdcentral finns på 1177  - <link url="https://www.1177.se/Vastra-Gotaland/sa-fungerar-varden/att-valja-vardmottagning/valja-vardmottagning/" type="_blank">Välja Vårdcentral</link></para>
+    <para>Om du vill välja en annan vårdcentral kan du göra det. Kontakta då den vårdcentral som du vill välja så hjälper de dig.</para>
+    <para>De vårdcentraler som du kan välja mellan och som ingår i vårdvalsmodellen Vårdval vårdcentral finns på 1177  - <link url="https://www.1177.se/Vastra-Gotaland/sa-fungerar-varden/att-valja-vardmottagning/valja-vardmottagning/" type="_blank">Välja Vårdcentral</link></para>
   </section>
   <section>
     <title>Övrig information</title>
     <itemizedlist mark="bullet">
-      <listitem>Om du har frågor som rör din hälsa, kontakta din nya vårdcentral
-eller ring 1177. </listitem>
-      <listitem>Om du har frågor gällande stängningen av NAMN_PÅ_VC är du
-välkommen att kontakta Västra Götalandsregionen via telefon
-070-205 24 30. </listitem>
+      <listitem>Om du har frågor som rör din hälsa, kontakta din nya vårdcentral eller ring 1177. </listitem>
+      <listitem>Om du har frågor gällande stängningen av NAMN_PÅ_VC är du välkommen att kontakta Västra Götalandsregionen via telefon 070-205 24 30. </listitem>
     </itemizedlist>
   </section>
 </article>`;
