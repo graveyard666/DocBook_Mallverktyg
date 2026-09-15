@@ -1,7 +1,6 @@
 import { FileText, Plus, BookOpen, Folder, FolderOpen, FolderPlus, RefreshCw } from 'lucide-react';
 import { exampleTemplates, type ExampleTemplate } from '../data/examples';
 import type { LocalTemplate } from '../hooks/useLocalTemplates';
-import { openFolderPicker } from '../lib/openFolder';
 
 interface Props {
   onLoadExample: (id: string) => void;
@@ -13,7 +12,7 @@ interface Props {
   isLocalLoading: boolean;
   onLoadLocal: (id: string) => void;
   onOpenFolderDialog: () => void;
-  onLoadFiles: (files: FileList) => Promise<void>;
+  onPickFolder: () => void;
   onRescanFolder: () => Promise<void>;
 }
 
@@ -80,13 +79,9 @@ export function Sidebar({
   isLocalLoading,
   onLoadLocal,
   onOpenFolderDialog,
-  onLoadFiles,
+  onPickFolder,
   onRescanFolder,
 }: Props) {
-  function pickFolder() {
-    openFolderPicker(onLoadFiles);
-  }
-
   return (
     <div className="h-full flex flex-col bg-white border-r border-gray-200">
       {/* Logo */}
@@ -106,7 +101,7 @@ export function Sidebar({
       <div className="px-3 py-3 border-b border-gray-200 space-y-1.5">
         {localTemplates.length === 0 && (
           <button
-            onClick={pickFolder}
+            onClick={onPickFolder}
             disabled={isLocalLoading}
             className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#C0002E] hover:bg-[#A00025] transition-colors shadow-sm disabled:opacity-50"
           >

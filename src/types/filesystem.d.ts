@@ -1,11 +1,21 @@
 // Minimal declarations for the File System Access API (not yet in lib.dom.d.ts)
+interface FileSystemHandle {
+  kind: 'file' | 'directory';
+  name: string;
+}
+
 interface FileSystemWritableFileStream extends WritableStream {
   write(data: string | BufferSource | Blob): Promise<void>;
   close(): Promise<void>;
 }
 
-interface FileSystemFileHandle {
+interface FileSystemFileHandle extends FileSystemHandle {
+  getFile(): Promise<File>;
   createWritable(): Promise<FileSystemWritableFileStream>;
+}
+
+interface FileSystemDirectoryHandle extends FileSystemHandle {
+  values(): AsyncIterableIterator<FileSystemHandle>;
 }
 
 interface SaveFilePickerOptions {
@@ -19,4 +29,5 @@ interface SaveFilePickerOptions {
 
 interface Window {
   showSaveFilePicker?: (options?: SaveFilePickerOptions) => Promise<FileSystemFileHandle>;
+  showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle>;
 }

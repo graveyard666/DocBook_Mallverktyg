@@ -57,6 +57,11 @@ export default function App() {
     setIsDirty(false);
   }
 
+  async function handleSaved() {
+    setIsDirty(false);
+    await localTemplates.rescanFolder();
+  }
+
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-100">
       {/* Top bar */}
@@ -127,7 +132,7 @@ export default function App() {
             isLocalLoading={localTemplates.isLoading}
             onLoadLocal={handleLoadLocal}
             onOpenFolderDialog={() => setShowFolderDialog(true)}
-            onLoadFiles={localTemplates.loadFromFileList}
+            onPickFolder={localTemplates.pickFolder}
             onRescanFolder={localTemplates.rescanFolder}
           />
         </aside>
@@ -155,7 +160,7 @@ export default function App() {
         folderName={localTemplates.folderName}
         templateCount={localTemplates.templates.length}
         skippedCount={localTemplates.skippedCount}
-        onLoadFiles={localTemplates.loadFromFileList}
+        onPickFolder={localTemplates.pickFolder}
         onClear={localTemplates.clearFolder}
       />
 
@@ -163,7 +168,7 @@ export default function App() {
         isOpen={showSaveDialog}
         onClose={() => setShowSaveDialog(false)}
         doc={doc}
-        onSaved={() => setIsDirty(false)}
+        onSaved={handleSaved}
       />
     </div>
   );

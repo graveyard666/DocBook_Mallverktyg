@@ -1,5 +1,4 @@
 import { Folder, X, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { openFolderPicker } from '../lib/openFolder';
 
 interface Props {
   isOpen: boolean;
@@ -8,7 +7,7 @@ interface Props {
   folderName: string | null;
   templateCount: number;
   skippedCount: number;
-  onLoadFiles: (files: FileList) => Promise<void>;
+  onPickFolder: () => void;
   onClear: () => void;
 }
 
@@ -19,14 +18,10 @@ export function LocalFolderDialog({
   folderName,
   templateCount,
   skippedCount,
-  onLoadFiles,
+  onPickFolder,
   onClear,
 }: Props) {
   if (!isOpen) return null;
-
-  function pickFolder() {
-    openFolderPicker(onLoadFiles);
-  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -111,7 +106,7 @@ export function LocalFolderDialog({
               </button>
               <div className="flex gap-2">
                 <button
-                  onClick={pickFolder}
+                  onClick={onPickFolder}
                   disabled={isLoading}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
                 >
@@ -134,7 +129,7 @@ export function LocalFolderDialog({
                 Avbryt
               </button>
               <button
-                onClick={pickFolder}
+                onClick={onPickFolder}
                 disabled={isLoading}
                 className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-[#C0002E] rounded-lg hover:bg-[#A00025] transition-colors disabled:opacity-50"
               >

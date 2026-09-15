@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { parseDocBookXml } from '../lib/parser';
+import { openFolderPicker } from '../lib/openFolder';
 
 export interface LocalTemplate {
   id: string;
@@ -12,7 +13,7 @@ export interface LocalTemplatesState {
   templates: LocalTemplate[];
   folderName: string | null;
   skippedCount: number;
-  loadFromFileList: (files: FileList) => Promise<void>;
+  pickFolder: () => void;
   rescanFolder: () => Promise<void>;
   clearFolder: () => void;
 }
@@ -22,10 +23,42 @@ export function useLocalTemplates(): LocalTemplatesState {
   const [templates, setTemplates] = useState<LocalTemplate[]>([]);
   const [folderName, setFolderName] = useState<string | null>(null);
   const [skippedCount, setSkippedCount] = useState(0);
+  const dirHandleRef = useRef<FileSystemDirectoryHandle | null>(null);
   const lastFileListRef = useRef<FileList | null>(null);
+
+  const loadFromDirectory = useCallback(async (handle: FileSystemDirectoryHandle) => {
+    setIsLoading(true);
+    const loaded: LocalTemplate[] = [];
+    let skipped = 0;
+
+    for await (const entry of handle.values()) {
+      if (entry.kind !== 'file') continue;
+      if (!entry.name.toLowerCase().endsWith('.xml')) continue;
+      const fileHandle = entry as FileSystemFileHandle;
+      try {
+        const file = await fileHandle.getFile();
+        const xml = await file.text();
+        const doc = parseDocBookXml(xml);
+        if (doc) {
+          loaded.push({ id: entry.name, name: entry.name.replace(/\.xml$/i, ''), xml });
+        } else {
+          skipped++;
+        }
+      } catch {
+        skipped++;
+      }
+    }
+
+    loaded.sort((a, b) => a.name.localeCompare(b.name, 'sv'));
+    setTemplates(loaded);
+    setFolderName(handle.name);
+    setSkippedCount(skipped);
+    setIsLoading(false);
+  }, []);
 
   const loadFromFileList = useCallback(async (files: FileList) => {
     lastFileListRef.current = files;
+    dirHandleRef.current = null;
     setIsLoading(true);
     const loaded: LocalTemplate[] = [];
     let skipped = 0;
@@ -43,7 +76,6 @@ export function useLocalTemplates(): LocalTemplatesState {
         const xml = await file.text();
         const doc = parseDocBookXml(xml);
         if (doc) {
-          // Use webkitRelativePath when available; fall back to index+name for uniqueness
           const id = file.webkitRelativePath || `${i}_${file.name}`;
           loaded.push({ id, name: file.name.replace(/\.xml$/i, ''), xml });
         } else {
@@ -61,18 +93,38 @@ export function useLocalTemplates(): LocalTemplatesState {
     setIsLoading(false);
   }, []);
 
+  const pickFolder = useCallback(() => {
+    if (typeof window.showDirectoryPicker === 'function') {
+      window
+        .showDirectoryPicker()
+        .then(async (handle) => {
+          dirHandleRef.current = handle;
+          await loadFromDirectory(handle);
+        })
+        .catch((err: any) => {
+          if (err?.name === 'AbortError') return;
+          openFolderPicker(loadFromFileList);
+        });
+    } else {
+      openFolderPicker(loadFromFileList);
+    }
+  }, [loadFromDirectory, loadFromFileList]);
+
   const rescanFolder = useCallback(async () => {
-    if (lastFileListRef.current) {
+    if (dirHandleRef.current) {
+      await loadFromDirectory(dirHandleRef.current);
+    } else if (lastFileListRef.current) {
       await loadFromFileList(lastFileListRef.current);
     }
-  }, [loadFromFileList]);
+  }, [loadFromDirectory, loadFromFileList]);
 
   const clearFolder = useCallback(() => {
+    dirHandleRef.current = null;
     lastFileListRef.current = null;
     setTemplates([]);
     setFolderName(null);
     setSkippedCount(0);
   }, []);
 
-  return { isLoading, templates, folderName, skippedCount, loadFromFileList, rescanFolder, clearFolder };
+  return { isLoading, templates, folderName, skippedCount, pickFolder, rescanFolder, clearFolder };
 }
