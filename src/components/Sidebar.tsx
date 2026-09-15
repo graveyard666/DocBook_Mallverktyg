@@ -1,4 +1,5 @@
-import { FileText, Plus, BookOpen, Folder, FolderOpen, FolderPlus, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { FileText, Plus, BookOpen, Folder, FolderOpen, FolderPlus, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
 import { exampleTemplates, type ExampleTemplate } from '../data/examples';
 import type { LocalTemplate } from '../hooks/useLocalTemplates';
 
@@ -82,6 +83,17 @@ export function Sidebar({
   onPickFolder,
   onRescanFolder,
 }: Props) {
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  function toggleGroup(id: string) {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   return (
     <div className="h-full flex flex-col bg-white border-r border-gray-200">
       {/* Logo */}
@@ -177,9 +189,18 @@ export function Sidebar({
         {groups.map((group, idx) => {
           const items = exampleTemplates.filter((t) => t.group === group.id);
           if (items.length === 0) return null;
+          const isCollapsed = collapsedGroups.has(group.id);
           return (
             <div key={group.id} className={idx > 0 ? 'border-t border-gray-100' : ''}>
-              <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+              <button
+                onClick={() => toggleGroup(group.id)}
+                className="w-full px-4 pt-4 pb-2 flex items-center gap-2 hover:bg-gray-50 transition-colors"
+              >
+                {isCollapsed ? (
+                  <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                )}
                 {group.logo ? (
                   <>
                     <img src={group.logo} alt={group.label} className="h-5 w-auto object-contain" />
@@ -195,17 +216,22 @@ export function Sidebar({
                     </span>
                   </>
                 )}
-              </div>
-              <div className="px-3 space-y-1 pb-4">
-                {items.map((tmpl) => (
-                  <ExampleButton
-                    key={tmpl.id}
-                    tmpl={tmpl}
-                    active={activeExampleId === tmpl.id}
-                    onLoad={() => onLoadExample(tmpl.id)}
-                  />
-                ))}
-              </div>
+                <span className="ml-auto text-[10px] text-gray-300 font-normal">
+                  {items.length}
+                </span>
+              </button>
+              {!isCollapsed && (
+                <div className="px-3 space-y-1 pb-4">
+                  {items.map((tmpl) => (
+                    <ExampleButton
+                      key={tmpl.id}
+                      tmpl={tmpl}
+                      active={activeExampleId === tmpl.id}
+                      onLoad={() => onLoadExample(tmpl.id)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
