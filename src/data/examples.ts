@@ -278,6 +278,38 @@ const vgrHpvVaccination = `<?xml version="1.0" encoding="UTF-8"?>
   </section>
 </article>`;
 
+const vgrHjalpmedel = `<?xml version="1.0" encoding="UTF-8"?>
+<article>
+  <section>
+    <title>Hej</title>
+    <para>Hjälpmedel från habilitering barn och ungdom i VGR är gratis för patienten. Däremot betalar habiliteringen ofta en månadskostnad. Om hjälpmedel inte längre används är det därför viktigt att de återlämnas.</para>
+    <para></para>
+    <para>Vi skickar det här till dig för att fråga om ditt barn fortfarande använder utvalda hjälpmedel. Via länken nedan hittar du ett formulär, vi är tacksamma om du fyller i vilka hjälpmedel som:</para>
+    <itemizedlist mark="bullet">
+      <listitem>fortfarande används</listitem>
+      <listitem>inte längre används, men finns kvar hemma</listitem>
+      <listitem>redan är återlämnade</listitem>
+      <listitem>har försvunnit</listitem>
+    </itemizedlist>
+    <para></para>
+    <para>I formuläret behöver du fylla i hjälpmedlens 7-siffriga individnummer. Detta finns i listan nedan och på hjälpmedlet (klisterlapp med streckkod, se exempel i länken). <link url="https://www.vgregion.se" type="_blank">Individnummer exempel</link></para>
+  </section>
+  <section>
+    <title><emphasis role="information">Hjälpmedel förskrivna till ditt barn som följs upp i formuläret är :</emphasis></title>
+    <variablelist>
+      <varlistentry>
+        <term>2543354</term>
+        <listitem>stativ</listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>1123122</term>
+        <listitem>tidshjälpmedel</listitem>
+      </varlistentry>
+    </variablelist>
+    <para><emphasis role="bold">Kopiera hela listan med hjälpmedel innan du klickar på formuläret</emphasis></para>
+  </section>
+</article>`;
+
 export interface ExampleTemplate {
   id: string;
   name: string;
@@ -335,6 +367,13 @@ export const exampleTemplates: ExampleTemplate[] = [
     description: 'Information om gratis HPV-vaccination för killar med länk till 1177',
     group: 'vgr',
     xml: vgrHpvVaccination,
+  },
+  {
+    id: 'vgr-hjalpmedel',
+    name: 'Dina hjälpmedel',
+    description: 'Uppföljning av förskrivna hjälpmedel med individnummer och länk till formulär',
+    group: 'vgr',
+    xml: vgrHjalpmedel,
   },
 ];
 
