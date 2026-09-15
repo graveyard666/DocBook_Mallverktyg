@@ -123,6 +123,18 @@ function parseSection(el: Element): Section {
   return { id: uid(), title, blocks };
 }
 
+function extractTitleFromSections(sections: Section[]): string {
+  for (const section of sections) {
+    if (!section.title) continue;
+    const text = section.title.children
+      .map((n) => (n.type === 'text' ? n.content : ''))
+      .join('')
+      .trim();
+    if (text) return text;
+  }
+  return 'Importerat meddelande';
+}
+
 export function parseDocBookXml(xml: string): DocBookDocument | null {
   try {
     const parser = new DOMParser();
@@ -156,7 +168,7 @@ export function parseDocBookXml(xml: string): DocBookDocument | null {
     });
     flushRootParas();
 
-    return { id: uid(), name: 'Imported', sections, rootParas };
+    return { id: uid(), name: extractTitleFromSections(sections), sections, rootParas };
   } catch {
     return null;
   }

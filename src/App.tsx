@@ -51,7 +51,7 @@ export default function App() {
     if (!tmpl) return;
     const parsed = parseDocBookXml(tmpl.xml);
     if (!parsed) return;
-    setDoc({ ...parsed, name: tmpl.name });
+    setDoc(parsed);
     setActiveLocalId(id);
     setActiveExampleId(null);
     setIsDirty(false);
