@@ -10,6 +10,7 @@ import type {
   ItemizedListBlock,
   ListItem,
   VarEntry,
+  MockButton,
 } from '../types/docbook';
 
 let idCounter = 0;
@@ -147,6 +148,7 @@ export function parseDocBookXml(xml: string): DocBookDocument | null {
 
     const sections: Section[] = [];
     const rootParas: ParaBlock[] = [];
+    const buttons: MockButton[] = [];
     let currentParaEls: Element[] = [];
 
     function flushRootParas() {
@@ -164,11 +166,16 @@ export function parseDocBookXml(xml: string): DocBookDocument | null {
         sections.push(parseSection(el));
       } else if (el.tagName === 'para') {
         currentParaEls.push(el);
+      } else if (el.tagName === 'buttons') {
+        el.querySelectorAll(':scope > button').forEach((btn) => {
+          const label = btn.textContent ?? '';
+          if (label.trim()) buttons.push({ id: uid(), label });
+        });
       }
     });
     flushRootParas();
 
-    return { id: uid(), name: extractTitleFromSections(sections), sections, rootParas };
+    return { id: uid(), name: extractTitleFromSections(sections), sections, rootParas, buttons };
   } catch {
     return null;
   }

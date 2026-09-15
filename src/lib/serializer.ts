@@ -8,6 +8,7 @@ import type {
   VarListBlock,
   ItemizedListBlock,
   ListItem,
+  MockButton,
 } from '../types/docbook';
 
 function escapeXml(str: string): string {
@@ -81,12 +82,23 @@ function serializeSection(section: Section): string {
   return `  <section>\n${titleStr}${blocks}\n  </section>`;
 }
 
+function serializeButtons(buttons: MockButton[]): string {
+  if (!buttons || buttons.length === 0) return '';
+  const items = buttons
+    .filter((b) => b.label.trim())
+    .map((b) => `  <button>${escapeXml(b.label)}</button>`)
+    .join('\n');
+  if (!items) return '';
+  return `<buttons>\n${items}\n</buttons>`;
+}
+
 export function serializeDocument(doc: DocBookDocument): string {
   const sections = doc.sections.map(serializeSection).join('\n');
   const rootParas = (doc.rootParas ?? [])
     .map((p) => serializePara(p).split('\n').map((line) => '  ' + line).join('\n'))
     .join('\n');
-  const body = [sections, rootParas].filter(Boolean).join('\n');
+  const buttons = serializeButtons(doc.buttons ?? []);
+  const body = [sections, rootParas, buttons].filter(Boolean).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<article>\n${body}\n</article>`;
 }
 
