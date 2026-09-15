@@ -57,9 +57,10 @@ export default function App() {
     setIsDirty(false);
   }
 
-  async function handleSaved() {
+  function handleSaved(fileName: string, xml: string) {
     setIsDirty(false);
-    await localTemplates.rescanFolder();
+    localTemplates.updateTemplate(fileName, xml);
+    localTemplates.rescanFolder();
   }
 
   return (

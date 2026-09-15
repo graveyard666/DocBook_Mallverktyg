@@ -16,6 +16,7 @@ export interface LocalTemplatesState {
   pickFolder: () => void;
   rescanFolder: () => Promise<void>;
   clearFolder: () => void;
+  updateTemplate: (fileName: string, xml: string) => void;
 }
 
 export function useLocalTemplates(): LocalTemplatesState {
@@ -126,5 +127,21 @@ export function useLocalTemplates(): LocalTemplatesState {
     setSkippedCount(0);
   }, []);
 
-  return { isLoading, templates, folderName, skippedCount, pickFolder, rescanFolder, clearFolder };
+  const updateTemplate = useCallback((fileName: string, xml: string) => {
+    setTemplates((prev) => {
+      const id = fileName.replace(/\.xml$/i, '');
+      const name = id;
+      const idx = prev.findIndex((t) => t.name === name || t.id === fileName);
+      if (idx >= 0) {
+        const updated = [...prev];
+        updated[idx] = { ...updated[idx], xml };
+        return updated;
+      }
+      return [...prev, { id: fileName, name, xml }].sort((a, b) =>
+        a.name.localeCompare(b.name, 'sv')
+      );
+    });
+  }, []);
+
+  return { isLoading, templates, folderName, skippedCount, pickFolder, rescanFolder, clearFolder, updateTemplate };
 }

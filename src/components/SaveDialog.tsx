@@ -7,7 +7,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   doc: DocBookDocument;
-  onSaved: () => void;
+  onSaved: (fileName: string, xml: string) => void;
 }
 
 export function SaveDialog({ isOpen, onClose, doc, onSaved }: Props) {
@@ -50,7 +50,6 @@ export function SaveDialog({ isOpen, onClose, doc, onSaved }: Props) {
           await writable.write(xml);
           await writable.close();
         } catch (err: any) {
-          // User cancelled the picker — fall back to Downloads silently
           if (err?.name === 'AbortError') {
             fallbackDownload(xml, name);
           } else {
@@ -60,7 +59,7 @@ export function SaveDialog({ isOpen, onClose, doc, onSaved }: Props) {
       } else {
         fallbackDownload(xml, name);
       }
-      onSaved();
+      onSaved(name, xml);
       onClose();
     } finally {
       setIsSaving(false);
