@@ -47,11 +47,14 @@ export function useCodeMode(doc: DocBookDocument, onDocChange: (doc: DocBookDocu
   function switchMode(next: EditorMode) {
     if (next === mode) return;
     if (next === 'code') {
+      if (codeStatus?.ok === false) {
+        setMode('code');
+        return;
+      }
       resetCode(doc);
       setMode('code');
       return;
     }
-    if (codeStatus && !codeStatus.ok) return;
     setMode('visual');
   }
 

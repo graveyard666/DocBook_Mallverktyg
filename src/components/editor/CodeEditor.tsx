@@ -1,7 +1,8 @@
-import { useRef, useState, type ClipboardEvent, type KeyboardEvent } from 'react';
-import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { useMemo, useRef, useState, type ClipboardEvent, type KeyboardEvent } from 'react';
+import { AlertTriangle, CheckCircle2, Wand2, XCircle } from 'lucide-react';
 import { highlightXml } from '../../lib/xmlHighlight';
 import { validateDocBookXml } from '../../lib/parser';
+import { suggestFix } from '../../lib/codeFixes';
 import type { CodeStatus } from '../../hooks/useCodeMode';
 
 interface Props {
@@ -23,6 +24,7 @@ export function CodeEditor({ value, onChange, status }: Props) {
   const [pending, setPending] = useState<PendingReplace | null>(null);
 
   const errorLine = status?.ok === false ? status.line : null;
+  const fix = useMemo(() => (status?.ok === false ? suggestFix(value) : null), [status, value]);
 
   function syncScroll() {
     if (!textRef.current || !highlightRef.current) return;
@@ -102,10 +104,10 @@ export function CodeEditor({ value, onChange, status }: Props) {
     if (!status.ok) {
       const errorLine = status.line;
       return (
-        <div className="flex items-start gap-2 text-xs text-red-300">
-          <XCircle className="w-4 h-4 flex-shrink-0 mt-px" />
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-red-300">
+          <XCircle className="w-4 h-4 flex-shrink-0" />
           <span>
-            {status.message} Rätta felet innan du går tillbaka till grafiskt läge.
+            {status.message}
             {errorLine !== null && (
               <>
                 {' '}
@@ -118,6 +120,18 @@ export function CodeEditor({ value, onChange, status }: Props) {
               </>
             )}
           </span>
+          {fix && (
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-gray-300">Förslag: {fix.label}</span>
+              <button
+                onClick={() => onChange(fix.text)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold text-white bg-[#C0002E] hover:bg-[#A00025] transition-colors"
+              >
+                <Wand2 className="w-3.5 h-3.5" />
+                Använd förslaget
+              </button>
+            </div>
+          )}
         </div>
       );
     }

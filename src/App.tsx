@@ -139,6 +139,19 @@ export default function App() {
         {/* Center: editor */}
         <main className="flex-1 flex flex-col overflow-hidden border-x border-gray-200">
           <EditorModeBar mode={codeMode.mode} onModeChange={codeMode.switchMode} />
+          {codeMode.mode === 'visual' && codeMode.codeStatus?.ok === false && (
+            <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 bg-amber-50 border-b border-amber-200 text-xs text-amber-900">
+              <span>
+                Koden har ett fel, så det grafiska läget visar den senaste fungerande versionen.
+              </span>
+              <button
+                onClick={() => codeMode.switchMode('code')}
+                className="font-semibold underline underline-offset-2 hover:text-amber-700"
+              >
+                Rätta i kodläget
+              </button>
+            </div>
+          )}
           {codeMode.mode === 'visual' ? (
             <DocumentEditor doc={doc} onUpdate={handleDocUpdate} />
           ) : (
