@@ -182,6 +182,19 @@ function describeParseError(message: string): { text: string; line: number | nul
   };
 }
 
+const TEXT_CONTAINER_SELECTOR = 'article, section, itemizedlist, variablelist, varlistentry, buttons';
+
+function findLooseText(xmlDoc: Document): string | null {
+  for (const el of Array.from(xmlDoc.querySelectorAll(TEXT_CONTAINER_SELECTOR))) {
+    for (const node of Array.from(el.childNodes)) {
+      if (node.nodeType !== Node.TEXT_NODE) continue;
+      const text = (node.textContent ?? '').trim();
+      if (text) return text;
+    }
+  }
+  return null;
+}
+
 export function validateDocBookXml(raw: string): DocBookValidation {
   if (!raw.trim()) return { ok: false, error: 'Textrutan är tom.', line: null };
 
@@ -199,6 +212,18 @@ export function validateDocBookXml(raw: string): DocBookValidation {
       ok: false,
       error: 'Hittade inget meddelande. Koden måste ligga inom en article-tagg.',
       line: null,
+    };
+  }
+
+  const looseText = findLooseText(doc);
+  if (looseText !== null) {
+    const snippet = looseText.length > 40 ? `${looseText.slice(0, 40)}…` : looseText;
+    const index = raw.indexOf(looseText);
+    const line = index === -1 ? null : raw.slice(0, index).split('\n').length;
+    return {
+      ok: false,
+      error: `Texten "${snippet}" ligger utanför en textruta och syns inte i meddelandet. Ta bort den eller flytta in den i en <para>-tagg.`,
+      line,
     };
   }
 
@@ -222,10 +247,6 @@ export function validateDocBookXml(raw: string): DocBookValidation {
   }
 
   warnUnknown(article, KNOWN_ARTICLE_TAGS);
-  const hasLooseText = Array.from(article.childNodes).some(
-    (n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? '').trim() !== ''
-  );
-  if (hasLooseText) warnings.add('Text utanför någon tagg ignoreras.');
   Array.from(article.children).forEach((el) => {
     if (el.tagName === 'section') {
       flushRootParas();
