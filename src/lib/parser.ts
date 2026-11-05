@@ -138,7 +138,7 @@ function extractTitleFromSections(sections: Section[]): string {
 
 export type DocBookValidation =
   | { ok: true; doc: DocBookDocument; warnings: string[] }
-  | { ok: false; error: string };
+  | { ok: false; error: string; line: number | null };
 
 const KNOWN_ARTICLE_TAGS = new Set(['section', 'para', 'buttons']);
 const KNOWN_SECTION_TAGS = new Set(['title', 'para', 'variablelist', 'itemizedlist']);
@@ -160,22 +160,35 @@ function normalizeInput(raw: string): string {
   return xml;
 }
 
-function describeParseError(message: string): string {
-  const line = message.match(/line\s+(\d+)/i);
-  const where = line ? ` på rad ${line[1]}` : '';
-  return `Koden är inte giltig XML. Felet finns${where}. Kontrollera att alla taggar är stängda och att tecken som < och & är korrekt skrivna.`;
+function describeParseError(message: string): { text: string; line: number | null } {
+  const match = message.match(/line\s+(\d+)/i);
+  const line = match ? Number(match[1]) : null;
+  const where = line ? ` på rad ${line}` : '';
+  return {
+    text: `Koden är inte giltig XML. Felet finns${where}. Kontrollera att alla taggar är stängda och att tecken som < och & är korrekt skrivna.`,
+    line,
+  };
 }
 
 export function validateDocBookXml(raw: string): DocBookValidation {
-  if (!raw.trim()) return { ok: false, error: 'Textrutan är tom.' };
+  if (!raw.trim()) return { ok: false, error: 'Textrutan är tom.', line: null };
 
   const parser = new DOMParser();
   const doc = parser.parseFromString(normalizeInput(raw), 'application/xml');
   const parseError = doc.querySelector('parsererror');
-  if (parseError) return { ok: false, error: describeParseError(parseError.textContent ?? '') };
+  if (parseError) {
+    const described = describeParseError(parseError.textContent ?? '');
+    return { ok: false, error: described.text, line: described.line };
+  }
 
   const article = doc.querySelector('article');
-  if (!article) return { ok: false, error: 'Hittade inget meddelande. Koden måste ligga inom en article-tagg.' };
+  if (!article) {
+    return {
+      ok: false,
+      error: 'Hittade inget meddelande. Koden måste ligga inom en article-tagg.',
+      line: null,
+    };
+  }
 
   const warnings = new Set<string>();
   const warnUnknown = (el: Element, known: Set<string>) => {

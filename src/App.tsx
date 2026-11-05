@@ -12,7 +12,6 @@ import { InboxPreview } from './components/InboxPreview';
 import { CodeView } from './components/CodeView';
 import { LocalFolderDialog } from './components/LocalFolderDialog';
 import { SaveDialog } from './components/SaveDialog';
-import { PasteCodeDialog } from './components/PasteCodeDialog';
 import { useLocalTemplates } from './hooks/useLocalTemplates';
 import { useCodeMode } from './hooks/useCodeMode';
 import { useSavedMessages } from './hooks/useSavedMessages';
@@ -33,7 +32,6 @@ export default function App() {
   const [rightPanel, setRightPanel] = useState<RightPanel>('preview');
   const [showFolderDialog, setShowFolderDialog] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [showPasteDialog, setShowPasteDialog] = useState(false);
   const [dbSaveState, setDbSaveState] = useState<DbSaveState>('idle');
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -125,7 +123,7 @@ export default function App() {
     localTemplates.rescanFolder();
   }
 
-  const saveBlocked = codeMode.mode === 'code' && codeMode.codeError !== null;
+  const saveBlocked = codeMode.mode === 'code' && codeMode.codeStatus?.ok === false;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-100">
@@ -229,19 +227,14 @@ export default function App() {
 
         {/* Center: editor */}
         <main className="flex-1 flex flex-col overflow-hidden border-x border-gray-200">
-          <EditorModeBar
-            mode={codeMode.mode}
-            onModeChange={codeMode.switchMode}
-            onPaste={() => setShowPasteDialog(true)}
-          />
+          <EditorModeBar mode={codeMode.mode} onModeChange={codeMode.switchMode} />
           {codeMode.mode === 'visual' ? (
             <DocumentEditor doc={doc} onUpdate={handleDocUpdate} />
           ) : (
             <CodeEditor
               value={codeMode.codeText}
               onChange={codeMode.editCode}
-              error={codeMode.codeError}
-              warnings={codeMode.codeWarnings}
+              status={codeMode.codeStatus}
             />
           )}
         </main>
@@ -275,15 +268,6 @@ export default function App() {
         onSaved={handleSaved}
       />
 
-      {showPasteDialog && (
-        <PasteCodeDialog
-          onClose={() => setShowPasteDialog(false)}
-          onImport={(imported, how) => {
-            codeMode.importDocument(imported, how);
-            setShowPasteDialog(false);
-          }}
-        />
-      )}
     </div>
   );
 }

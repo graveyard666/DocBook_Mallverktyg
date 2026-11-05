@@ -4,30 +4,43 @@ import { serializeDocument } from '../lib/serializer';
 import { validateDocBookXml } from '../lib/parser';
 
 export type EditorMode = 'visual' | 'code';
-export type ImportMode = 'append' | 'replace';
+
+export type CodeStatus =
+  | {
+      ok: true;
+      warnings: string[];
+      sections: number;
+      textBlocks: number;
+      buttons: number;
+    }
+  | { ok: false; message: string; line: number | null };
+
+function countContent(doc: DocBookDocument) {
+  return {
+    sections: doc.sections.length,
+    textBlocks: (doc.rootParas ?? []).length,
+    buttons: (doc.buttons ?? []).length,
+  };
+}
 
 export function useCodeMode(doc: DocBookDocument, onDocChange: (doc: DocBookDocument) => void) {
   const [mode, setMode] = useState<EditorMode>('visual');
   const [codeText, setCodeText] = useState('');
-  const [codeError, setCodeError] = useState<string | null>(null);
-  const [codeWarnings, setCodeWarnings] = useState<string[]>([]);
+  const [codeStatus, setCodeStatus] = useState<CodeStatus | null>(null);
 
   function resetCode(next: DocBookDocument) {
     setCodeText(serializeDocument(next));
-    setCodeError(null);
-    setCodeWarnings([]);
+    setCodeStatus({ ok: true, warnings: [], ...countContent(next) });
   }
 
   function editCode(text: string) {
     setCodeText(text);
     const result = validateDocBookXml(text);
     if (result.ok) {
-      setCodeError(null);
-      setCodeWarnings(result.warnings);
+      setCodeStatus({ ok: true, warnings: result.warnings, ...countContent(result.doc) });
       onDocChange({ ...result.doc, id: doc.id, name: doc.name });
     } else {
-      setCodeError(result.error);
-      setCodeWarnings([]);
+      setCodeStatus({ ok: false, message: result.error, line: result.line });
     }
   }
 
@@ -38,32 +51,9 @@ export function useCodeMode(doc: DocBookDocument, onDocChange: (doc: DocBookDocu
       setMode('code');
       return;
     }
-    if (codeError) return;
+    if (codeStatus && !codeStatus.ok) return;
     setMode('visual');
   }
 
-  function importDocument(imported: DocBookDocument, how: ImportMode) {
-    const next: DocBookDocument =
-      how === 'replace'
-        ? { ...imported, id: doc.id, name: doc.name }
-        : {
-            ...doc,
-            sections: [...doc.sections, ...imported.sections],
-            rootParas: [...(doc.rootParas ?? []), ...(imported.rootParas ?? [])],
-            buttons: [...(doc.buttons ?? []), ...(imported.buttons ?? [])],
-          };
-    onDocChange(next);
-    resetCode(next);
-  }
-
-  return {
-    mode,
-    codeText,
-    codeError,
-    codeWarnings,
-    switchMode,
-    editCode,
-    importDocument,
-    resetCode,
-  };
+  return { mode, codeText, codeStatus, switchMode, editCode, resetCode };
 }
