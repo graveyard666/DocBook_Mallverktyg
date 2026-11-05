@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { FileText, Plus, BookOpen, Folder, FolderOpen, FolderPlus, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
+import { FileText, Plus, BookOpen, Database, Folder, FolderOpen, FolderPlus, RefreshCw, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { exampleTemplates, type ExampleTemplate } from '../data/examples';
 import type { LocalTemplate } from '../hooks/useLocalTemplates';
+import type { SavedMessageSummary } from '../hooks/useSavedMessages';
 
 interface Props {
   onLoadExample: (id: string) => void;
@@ -15,6 +16,12 @@ interface Props {
   onOpenFolderDialog: () => void;
   onPickFolder: () => void;
   onRescanFolder: () => Promise<void>;
+  savedMessages: SavedMessageSummary[];
+  savedLoading: boolean;
+  savedError: string | null;
+  activeSavedId: string | null;
+  onLoadSaved: (id: string) => void;
+  onDeleteSaved: (id: string) => void;
 }
 
 const groups: { id: string; label: string; logo?: string }[] = [
@@ -45,6 +52,38 @@ function ExampleButton({
       </span>
       <span className="text-xs text-gray-400 pl-5 leading-tight">{tmpl.description}</span>
     </button>
+  );
+}
+
+function SavedMessageButton({
+  item,
+  active,
+  onLoad,
+  onDelete,
+}: {
+  item: SavedMessageSummary;
+  active: boolean;
+  onLoad: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div
+      className={`group relative w-full rounded transition-colors ${
+        active ? 'bg-[#C0002E]/10 text-[#C0002E]' : 'text-gray-700 hover:bg-gray-50'
+      }`}
+    >
+      <button onClick={onLoad} className="w-full flex items-center gap-2 pl-3 pr-9 py-2.5 text-left">
+        <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+        <span className="text-sm font-semibold leading-tight truncate">{item.name}</span>
+      </button>
+      <button
+        onClick={onDelete}
+        title="Ta bort"
+        className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded text-gray-400 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-red-600 hover:bg-red-50 transition-all"
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
+    </div>
   );
 }
 
@@ -82,6 +121,12 @@ export function Sidebar({
   onOpenFolderDialog,
   onPickFolder,
   onRescanFolder,
+  savedMessages,
+  savedLoading,
+  savedError,
+  activeSavedId,
+  onLoadSaved,
+  onDeleteSaved,
 }: Props) {
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
@@ -125,7 +170,7 @@ export function Sidebar({
         <button
           onClick={onNewBlank}
           className={`w-full flex items-center gap-2 px-3 py-2 rounded text-sm text-left transition-colors ${
-            activeExampleId === null && activeLocalId === null
+            activeExampleId === null && activeLocalId === null && activeSavedId === null
               ? 'bg-[#C0002E]/10 text-[#C0002E] font-semibold'
               : 'text-gray-600 hover:bg-gray-50'
           }`}
@@ -137,6 +182,34 @@ export function Sidebar({
 
       {/* Scrollable area */}
       <div className="flex-1 overflow-y-auto">
+        <div className="border-b border-gray-100">
+          <div className="px-4 pt-4 pb-1 flex items-center gap-2">
+            <Database className="w-3.5 h-3.5 text-[#C0002E] flex-shrink-0" />
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+              Sparade meddelanden
+            </span>
+            {savedLoading && <RefreshCw className="w-3 h-3 text-gray-400 animate-spin ml-auto" />}
+          </div>
+          {savedError && <p className="px-4 pb-2 text-xs text-red-600">{savedError}</p>}
+          {!savedLoading && !savedError && savedMessages.length === 0 && (
+            <p className="px-4 pb-3 text-[10px] text-gray-400 leading-snug">
+              Inga sparade meddelanden ännu. Använd Spara i databas i verktygsfältet.
+            </p>
+          )}
+          {savedMessages.length > 0 && (
+            <div className="px-3 space-y-1 pb-4">
+              {savedMessages.map((item) => (
+                <SavedMessageButton
+                  key={item.id}
+                  item={item}
+                  active={activeSavedId === item.id}
+                  onLoad={() => onLoadSaved(item.id)}
+                  onDelete={() => onDeleteSaved(item.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
         {localTemplates.length > 0 && (
           <div className="border-b border-gray-100">
             <div className="px-4 pt-4 pb-1 flex items-center justify-between gap-2">

@@ -136,47 +136,98 @@ function extractTitleFromSections(sections: Section[]): string {
   return 'Importerat meddelande';
 }
 
-export function parseDocBookXml(xml: string): DocBookDocument | null {
-  try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, 'application/xml');
-    const parseError = doc.querySelector('parsererror');
-    if (parseError) return null;
+export type DocBookValidation =
+  | { ok: true; doc: DocBookDocument; warnings: string[] }
+  | { ok: false; error: string };
 
-    const article = doc.querySelector('article');
-    if (!article) return null;
+const KNOWN_ARTICLE_TAGS = new Set(['section', 'para', 'buttons']);
+const KNOWN_SECTION_TAGS = new Set(['title', 'para', 'variablelist', 'itemizedlist']);
 
-    const sections: Section[] = [];
-    const rootParas: ParaBlock[] = [];
-    const buttons: MockButton[] = [];
-    let currentParaEls: Element[] = [];
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&');
+}
 
-    function flushRootParas() {
-      if (currentParaEls.length > 0) {
-        rootParas.push(makeParaBlock(currentParaEls));
-        currentParaEls = [];
-      }
-    }
+function normalizeInput(raw: string): string {
+  let xml = raw.trim();
+  if (/^&lt;/.test(xml)) xml = decodeEntities(xml);
+  xml = xml.replace(/^<\?xml[^>]*\?>/, '').trim();
+  if (!/<article[\s>]/.test(xml)) xml = `<article>${xml}</article>`;
+  return xml;
+}
 
-    article.childNodes.forEach((child) => {
-      if (child.nodeType !== Node.ELEMENT_NODE) return;
-      const el = child as Element;
-      if (el.tagName === 'section') {
-        flushRootParas();
-        sections.push(parseSection(el));
-      } else if (el.tagName === 'para') {
-        currentParaEls.push(el);
-      } else if (el.tagName === 'buttons') {
-        el.querySelectorAll(':scope > button').forEach((btn) => {
-          const label = btn.textContent ?? '';
-          if (label.trim()) buttons.push({ id: uid(), label });
-        });
-      }
+function describeParseError(message: string): string {
+  const line = message.match(/line\s+(\d+)/i);
+  const where = line ? ` på rad ${line[1]}` : '';
+  return `Koden är inte giltig XML. Felet finns${where}. Kontrollera att alla taggar är stängda och att tecken som < och & är korrekt skrivna.`;
+}
+
+export function validateDocBookXml(raw: string): DocBookValidation {
+  if (!raw.trim()) return { ok: false, error: 'Textrutan är tom.' };
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(normalizeInput(raw), 'application/xml');
+  const parseError = doc.querySelector('parsererror');
+  if (parseError) return { ok: false, error: describeParseError(parseError.textContent ?? '') };
+
+  const article = doc.querySelector('article');
+  if (!article) return { ok: false, error: 'Hittade inget meddelande. Koden måste ligga inom en article-tagg.' };
+
+  const warnings = new Set<string>();
+  const warnUnknown = (el: Element, known: Set<string>) => {
+    Array.from(el.children).forEach((child) => {
+      if (!known.has(child.tagName)) warnings.add(`Elementet <${child.tagName}> stöds inte och ignoreras.`);
     });
-    flushRootParas();
+  };
 
-    return { id: uid(), name: extractTitleFromSections(sections), sections, rootParas, buttons };
-  } catch {
-    return null;
+  const sections: Section[] = [];
+  const rootParas: ParaBlock[] = [];
+  const buttons: MockButton[] = [];
+  let currentParaEls: Element[] = [];
+
+  function flushRootParas() {
+    if (currentParaEls.length > 0) {
+      rootParas.push(makeParaBlock(currentParaEls));
+      currentParaEls = [];
+    }
   }
+
+  warnUnknown(article, KNOWN_ARTICLE_TAGS);
+  const hasLooseText = Array.from(article.childNodes).some(
+    (n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? '').trim() !== ''
+  );
+  if (hasLooseText) warnings.add('Text utanför någon tagg ignoreras.');
+  Array.from(article.children).forEach((el) => {
+    if (el.tagName === 'section') {
+      flushRootParas();
+      warnUnknown(el, KNOWN_SECTION_TAGS);
+      sections.push(parseSection(el));
+    } else if (el.tagName === 'para') {
+      currentParaEls.push(el);
+    } else if (el.tagName === 'buttons') {
+      el.querySelectorAll(':scope > button').forEach((btn) => {
+        const label = btn.textContent ?? '';
+        if (label.trim()) buttons.push({ id: uid(), label });
+      });
+    }
+  });
+  flushRootParas();
+
+  const built: DocBookDocument = {
+    id: uid(),
+    name: extractTitleFromSections(sections),
+    sections,
+    rootParas,
+    buttons,
+  };
+  return { ok: true, doc: built, warnings: Array.from(warnings) };
+}
+
+export function parseDocBookXml(xml: string): DocBookDocument | null {
+  const result = validateDocBookXml(xml);
+  return result.ok ? result.doc : null;
 }
