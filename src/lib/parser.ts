@@ -142,6 +142,18 @@ export type DocBookValidation =
 
 const KNOWN_ARTICLE_TAGS = new Set(['section', 'para', 'buttons']);
 const KNOWN_SECTION_TAGS = new Set(['title', 'para', 'variablelist', 'itemizedlist']);
+const KNOWN_INLINE_TAGS = new Set(['emphasis', 'link', 'ulink']);
+const KNOWN_STRUCTURE_TAGS = new Set([
+  'title',
+  'para',
+  'variablelist',
+  'varlistentry',
+  'term',
+  'listitem',
+  'itemizedlist',
+  'buttons',
+  'button',
+]);
 
 function decodeEntities(text: string): string {
   return text
@@ -229,6 +241,13 @@ export function validateDocBookXml(raw: string): DocBookValidation {
     }
   });
   flushRootParas();
+
+  article.querySelectorAll('*').forEach((el) => {
+    const parent = el.parentElement;
+    if (!parent || parent === article || parent.tagName === 'section') return;
+    if (KNOWN_INLINE_TAGS.has(el.tagName) || KNOWN_STRUCTURE_TAGS.has(el.tagName)) return;
+    warnings.add(`Formateringen <${el.tagName}> stöds inte i grafiskt läge och visas som vanlig text.`);
+  });
 
   const built: DocBookDocument = {
     id: uid(),

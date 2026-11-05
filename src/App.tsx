@@ -152,6 +152,17 @@ export default function App() {
               </button>
             </div>
           )}
+          {codeMode.mode === 'visual' && codeMode.codeStatus?.ok && codeMode.codeStatus.warnings.length > 0 && (
+            <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 bg-amber-50 border-b border-amber-200 text-xs text-amber-900">
+              <span>{codeMode.codeStatus.warnings.join(' ')}</span>
+              <button
+                onClick={() => codeMode.switchMode('code')}
+                className="font-semibold underline underline-offset-2 hover:text-amber-700"
+              >
+                Visa i kodläget
+              </button>
+            </div>
+          )}
           {codeMode.mode === 'visual' ? (
             <DocumentEditor doc={doc} onUpdate={handleDocUpdate} />
           ) : (

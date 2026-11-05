@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { DocBookDocument } from '../types/docbook';
 import { serializeDocument } from '../lib/serializer';
 import { validateDocBookXml } from '../lib/parser';
@@ -27,9 +27,12 @@ export function useCodeMode(doc: DocBookDocument, onDocChange: (doc: DocBookDocu
   const [mode, setMode] = useState<EditorMode>('visual');
   const [codeText, setCodeText] = useState('');
   const [codeStatus, setCodeStatus] = useState<CodeStatus | null>(null);
+  const syncedXml = useRef<string | null>(null);
 
   function resetCode(next: DocBookDocument) {
-    setCodeText(serializeDocument(next));
+    const xml = serializeDocument(next);
+    syncedXml.current = xml;
+    setCodeText(xml);
     setCodeStatus({ ok: true, warnings: [], ...countContent(next) });
   }
 
@@ -37,6 +40,7 @@ export function useCodeMode(doc: DocBookDocument, onDocChange: (doc: DocBookDocu
     setCodeText(text);
     const result = validateDocBookXml(text);
     if (result.ok) {
+      syncedXml.current = serializeDocument(result.doc);
       setCodeStatus({ ok: true, warnings: result.warnings, ...countContent(result.doc) });
       onDocChange({ ...result.doc, id: doc.id, name: doc.name });
     } else {
@@ -51,7 +55,7 @@ export function useCodeMode(doc: DocBookDocument, onDocChange: (doc: DocBookDocu
         setMode('code');
         return;
       }
-      resetCode(doc);
+      if (serializeDocument(doc) !== syncedXml.current) resetCode(doc);
       setMode('code');
       return;
     }
