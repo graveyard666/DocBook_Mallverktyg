@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Eye, Code2, Save, Database, Check } from 'lucide-react';
+import { Eye, Code2, Save } from 'lucide-react';
 import type { DocBookDocument } from './types/docbook';
 import { createBlankDocument, loadExampleDocument } from './data/examples';
 import { parseDocBookXml } from './lib/parser';
-import { serializeDocument } from './lib/serializer';
 import { Sidebar } from './components/Sidebar';
 import { DocumentEditor } from './components/editor/DocumentEditor';
 import { CodeEditor } from './components/editor/CodeEditor';
@@ -14,43 +13,29 @@ import { LocalFolderDialog } from './components/LocalFolderDialog';
 import { SaveDialog } from './components/SaveDialog';
 import { useLocalTemplates } from './hooks/useLocalTemplates';
 import { useCodeMode } from './hooks/useCodeMode';
-import { useSavedMessages } from './hooks/useSavedMessages';
 
 type RightPanel = 'preview' | 'code';
-type DbSaveState = 'idle' | 'saving' | 'saved';
-
-function errorText(err: unknown): string {
-  return err instanceof Error ? err.message : 'Något gick fel. Försök igen.';
-}
 
 export default function App() {
   const [doc, setDoc] = useState<DocBookDocument>(createBlankDocument);
-  const [isDirty, setIsDirty] = useState(false);
   const [activeExampleId, setActiveExampleId] = useState<string | null>(null);
   const [activeLocalId, setActiveLocalId] = useState<string | null>(null);
-  const [activeSavedId, setActiveSavedId] = useState<string | null>(null);
   const [rightPanel, setRightPanel] = useState<RightPanel>('preview');
   const [showFolderDialog, setShowFolderDialog] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [dbSaveState, setDbSaveState] = useState<DbSaveState>('idle');
-  const [notice, setNotice] = useState<string | null>(null);
 
   const localTemplates = useLocalTemplates();
-  const savedMessages = useSavedMessages();
 
   function handleDocUpdate(updated: DocBookDocument) {
     setDoc(updated);
-    setIsDirty(true);
   }
 
   const codeMode = useCodeMode(doc, handleDocUpdate);
 
   function showDocument(next: DocBookDocument) {
     setDoc(next);
-    setIsDirty(false);
     setActiveExampleId(null);
     setActiveLocalId(null);
-    setActiveSavedId(null);
     codeMode.resetCode(next);
   }
 
@@ -74,56 +59,10 @@ export default function App() {
     setActiveLocalId(id);
   }
 
-  async function handleLoadSaved(id: string) {
-    try {
-      const record = await savedMessages.load(id);
-      const parsed = parseDocBookXml(record.xml);
-      if (!parsed) {
-        setNotice('Det sparade meddelandet kunde inte läsas.');
-        return;
-      }
-      showDocument({ ...parsed, name: record.name });
-      setActiveSavedId(id);
-      setNotice(null);
-    } catch (err) {
-      setNotice(errorText(err));
-    }
-  }
-
-  async function handleDeleteSaved(id: string) {
-    const item = savedMessages.messages.find((m) => m.id === id);
-    if (!window.confirm(`Ta bort "${item?.name ?? 'meddelandet'}" från de sparade meddelandena?`)) return;
-    try {
-      await savedMessages.remove(id);
-      if (activeSavedId === id) setActiveSavedId(null);
-      setNotice(null);
-    } catch (err) {
-      setNotice(errorText(err));
-    }
-  }
-
-  async function handleSaveToDatabase() {
-    setDbSaveState('saving');
-    try {
-      const name = doc.name.trim() || 'Namnlöst meddelande';
-      const id = await savedMessages.save(name, serializeDocument(doc), activeSavedId);
-      setActiveSavedId(id);
-      setNotice(null);
-      setDbSaveState('saved');
-      setTimeout(() => setDbSaveState('idle'), 2000);
-    } catch (err) {
-      setDbSaveState('idle');
-      setNotice(errorText(err));
-    }
-  }
-
   function handleSaved(fileName: string, xml: string) {
-    setIsDirty(false);
     localTemplates.updateTemplate(fileName, xml);
     localTemplates.rescanFolder();
   }
-
-  const saveBlocked = codeMode.mode === 'code' && codeMode.codeStatus?.ok === false;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-100">
@@ -141,25 +80,12 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Save button — only shown when there are unsaved changes */}
-          {isDirty && (
-            <button
-              onClick={() => setShowSaveDialog(true)}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-white bg-[#C0002E] rounded-lg hover:bg-[#A00025] transition-colors shadow-sm"
-            >
-              <Save className="w-3.5 h-3.5" />
-              Spara
-            </button>
-          )}
-
           <button
-            onClick={handleSaveToDatabase}
-            disabled={dbSaveState === 'saving' || saveBlocked}
-            title={saveBlocked ? 'Rätta felet i koden först' : undefined}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-[#C0002E] bg-white border border-[#C0002E]/30 rounded-lg hover:bg-[#C0002E]/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            onClick={() => setShowSaveDialog(true)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-white bg-[#C0002E] rounded-lg hover:bg-[#A00025] transition-colors shadow-sm"
           >
-            {dbSaveState === 'saved' ? <Check className="w-3.5 h-3.5" /> : <Database className="w-3.5 h-3.5" />}
-            {dbSaveState === 'saving' ? 'Sparar...' : dbSaveState === 'saved' ? 'Sparat' : 'Spara i databas'}
+            <Save className="w-3.5 h-3.5" />
+            Spara
           </button>
 
           {/* Right panel toggle */}
@@ -191,15 +117,6 @@ export default function App() {
         </div>
       </header>
 
-      {notice && (
-        <div className="flex-shrink-0 flex items-center justify-between gap-3 px-4 py-2 bg-red-50 border-b border-red-100 text-sm text-red-700">
-          <span>{notice}</span>
-          <button onClick={() => setNotice(null)} className="text-xs font-semibold text-red-700 hover:underline">
-            Stäng
-          </button>
-        </div>
-      )}
-
       {/* Main three-panel layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left sidebar */}
@@ -216,12 +133,6 @@ export default function App() {
             onOpenFolderDialog={() => setShowFolderDialog(true)}
             onPickFolder={localTemplates.pickFolder}
             onRescanFolder={localTemplates.rescanFolder}
-            savedMessages={savedMessages.messages}
-            savedLoading={savedMessages.isLoading}
-            savedError={savedMessages.error}
-            activeSavedId={activeSavedId}
-            onLoadSaved={handleLoadSaved}
-            onDeleteSaved={handleDeleteSaved}
           />
         </aside>
 
